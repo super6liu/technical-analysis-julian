@@ -18,7 +18,6 @@ class DatastoreService():
 
     async def update(self, symbol: str):
         ticker = await self.__ds.ticker.read(symbol)
-        print(ticker)
         if ticker.empty:
             ticker = pd.DataFrame({'Symbol': pd.Series([symbol], dtype='str'),
                                    'Dividended':  pd.Series([None], dtype='datetime64[D]'),
@@ -30,10 +29,12 @@ class DatastoreService():
             ticker = await self.__ds.ticker.read(symbol)
             history = self.__hs.history(symbol)
 
-            ticker.at[symbol, 'Dividended'] = history.query(
-                'Dividends > 0').last('1d').index[0]
-            ticker.at[symbol, 'Splitted'] = history.query(
-                '`Stock Splits` > 0').last('1d').index[0]
+            lastDividendRow = history.query('Dividends > 0').last('1d')
+            if not lastDividendRow.empty:
+                ticker.at[symbol, 'Dividended'] = lastDividendRow.index[0]
+            lastSplitRow = history.query('`Stock Splits` > 0').last('1d')
+            if not lastSplitRow.empty:
+                ticker.at[symbol, 'Splitted'] = lastSplitRow.index[0]
             ticker.at[symbol, 'Updated'] = date.today()
 
             history.drop(['Dividends', 'Stock Splits'],
@@ -42,28 +43,36 @@ class DatastoreService():
             await self.__ds.history.create(history)
             await self.__ds.ticker.update(ticker)
         else:
-            history = self.__hs.history(symbol, ticker.loc[0, 'Updated'])
+            updated = ticker['Updated'][0]
+            history = self.__hs.history(symbol, updated)
 
             # dividend & split
-            dividend = history.query('Dividends > 0').first('1d')[
-                'Dividends'].iloc[0]
-            await self.__ds.history.update_dividend(symbol, dividend, ticker.loc[0, 'Dividended'])
-            split = history.query('`Stock Splits` > 0')[
-                'Stock Splits'].product()
-            await self.__ds.history.update_split(symbol, split)
+            newDividendRow = history.query('Dividends > 0').first('1d')
+            if not newDividendRow.empty:
+                dividend = newDividendRow['Dividends'][0]
+                await self.__ds.history.update_dividend(symbol, dividend, ticker['Dividended'][0])
 
-            ticker.loc[0, 'Dividended'] = history.query(
-                'Dividends > 0').last('1d')['Date'].iat[0]
-            ticker.loc[0, 'Splitted'] = history.query(
-                '`Stock Splits` > 0').last('1d')['Date'].iat[0]
-            ticker.loc[0, 'Updated'] = date.today()
+            newSplitRows = history.query('`Stock Splits` > 0')
+            if not newSplitRows.empty:
+                split = newSplitRows['Stock Splits'].product()
+                if split != 1:
+                    await self.__ds.history.update_split(symbol, split)
 
-            history.drop(['`Dividends', 'Stock Splits'], axis='columns')
-            await self.__ds.history.update(history)
+            lastDividendRow = history.query('Dividends > 0').last('1d')
+            if not lastDividendRow.empty:
+                ticker.at[symbol, 'Dividended'] = lastDividendRow.index[0]
+            lastSplitRow = history.query('`Stock Splits` > 0').last('1d')
+            if not lastSplitRow.empty:
+                ticker.at[symbol, 'Splitted'] = lastSplitRow.index[0]
+            ticker.at[symbol, 'Updated'] = date.today()
+
+            history.drop(['Dividends', 'Stock Splits'], axis='columns', inplace=True)
+            history.insert(0, 'Symbol', symbol, allow_duplicates=True)
+            await self.__ds.history.create(history)
             await self.__ds.ticker.update(ticker)
 
     async def delete(self, symbol: str):
-        await self.__ds.history.delete(symbol)
+        # FK CASCADE to History table
         await self.__ds.ticker.delete(symbol)
 
     async def backfill(self, debug=False):
@@ -81,7 +90,10 @@ if __name__ == '__main__':
             ss, HistoryService(), SymbolService())
         await ds.delete('MSFT')
         await ds.update('MSFT')
-        # print(await ds.read('MSFT'))
+        print(await ds.read('MSFT'))
+
+        await ds.update('MSFT')
+        print(await ds.read('MSFT'))
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())

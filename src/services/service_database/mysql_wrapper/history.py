@@ -37,7 +37,8 @@ class History(Base):
             INSERT IGNORE INTO {__class__.__name__} ({labels})
             VALUES ({values});
         """
-        df.index = df.index.astype(str).str[:10]
+        df = df.reset_index(inplace=False)
+        df['Date'] = df['Date'].astype(str).str[:10]
         await self._writemany(sql, df)
 
     async def read(self, symbol, start='2000-01-01', end=datetime.date.today()):
@@ -47,13 +48,15 @@ class History(Base):
         """
         return await self._read(sql, [symbol, start, end], index="Date", columns=("Date", 'Symbol', 'Open', "High", 'Low', "Close", 'Volume'), types=[])
 
-    # async def update(self, df):
-    #     sql = f"""
-    #         UPDATE {__class__.__name__} AS h, temp AS t
-    #         WHERE h.Date = t.Date AND h.Symbol = t.Symbol
-    #         SET h.Open = t.Open, h.High = t.High, h.Low = t.Low, h.Close = t.Close;
-    #     """
-    #     await self._read(sql)
+    async def update(self, df: pd.DataFrame):
+        sql = f"""
+            UPDATE {__class__.__name__}
+            SET Open = %s, High = %s, Low = %s, Close = %s
+            WHERE Date = %s AND Symbol = %s;
+        """
+        df.reset_index(inplace=False)
+        df['Date'] = df['Date'].astype(str).str[:10]
+        await self._writemany(sql, df[['Open', "High", 'Low', "Close", 'Volume', "Date", 'Symbol',]])
 
     async def update_dividend(self, symbol: str, dividend: number, start):
         sql = f"""
@@ -64,7 +67,7 @@ class History(Base):
                 Close = Close - %s
             WHERE Symbol = %s AND Date > %s;
         """
-        await self._write(sql, [dividend, dividend, symbol, start])
+        await self._write(sql, [dividend.item(), dividend.item(), symbol, '2021-05-19'])
 
     async def update_split(self, symbol: str, split: number):
         sql = f"""
@@ -75,7 +78,7 @@ class History(Base):
                 Close = Close / @split
             WHERE Symbol = %s;
         """
-        await self._write(sql, [split, symbol])
+        await self._write(sql, [split.item(), symbol])
 
     async def delete(self, symbol):
         sql = f"""

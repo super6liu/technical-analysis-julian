@@ -30,6 +30,7 @@ class Ticker(Base):
             INSERT IGNORE INTO {__class__.__name__} ({labels})
             VALUES ({values});
         """
+        df = df.reset_index(inplace=False)
         await self._writemany(sql, df)
 
     async def read(self, symbol):
@@ -46,9 +47,11 @@ class Ticker(Base):
             WHERE Symbol = %s;
         """
 
+        df = df.copy()
         for c in df.columns:
             df[c] = df[c].astype(str).str[:10]
-        await self._writemany(sql, df)
+        df.reset_index(inplace=True)
+        await self._writemany(sql, df[['Dividended', 'Splitted', 'Updated', 'Symbol']])
 
     async def delete(self, symbol):
         sql = f"""

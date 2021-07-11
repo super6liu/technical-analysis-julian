@@ -1,12 +1,9 @@
-import asyncio
 import os
 import json
 import pandas as pd
-from aiomysql import create_pool
+from aiomysql import create_pool, Pool
 
-# todo: check sqlalchemy pool
 # todo: get credential from config
-# todo: FK
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
@@ -14,34 +11,26 @@ PATH = os.path.join(ROOT_DIR, 'credentials/mysql.json')
 with open(PATH) as file:
     CREDENTIAL = json.load(file)
 
-# SQLAlchemey 1.4 https://docs.sqlalchemy.org/en/14/contents.html
-
 
 class Base():
-    pool = None
-
-    def __init__(self) -> None:
-        pass
+    pool: Pool = None
 
     async def _execute(self, sql):
         await self.__setup()
 
-        # check conn close
         async with Base.pool.acquire() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(sql)
 
             await conn.commit()
 
-    async def _read(self, sql, params, index, columns, types):
+    async def _read(self, sql, params, index, columns):
         await self.__setup()
         async with Base.pool.acquire() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(sql, params)
                 rows = await cur.fetchall()
-                d = pd.DataFrame.from_records(rows, index=index, columns=columns)
-                # d.astype(dtype={'Dividended': 'datetime64[D]', 'Splitted': 'datetime64[D]', 'Updated': 'datetime64[D]'}, copy=False)
-                return d
+                return pd.DataFrame.from_records(rows, index=index, columns=columns)
 
     async def _write(self, sql, params: list):
         await self.__setup()
@@ -55,7 +44,7 @@ class Base():
         await self.__setup()
         async with Base.pool.acquire() as conn:
             async with conn.cursor() as cur:
-                await cur.executemany(sql, params.to_records(index=True).tolist())
+                await cur.executemany(sql, params.to_records(index=False).tolist())
 
             await conn.commit()
 

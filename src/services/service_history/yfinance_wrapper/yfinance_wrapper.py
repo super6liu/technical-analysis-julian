@@ -63,14 +63,6 @@ class YfinanceWrapper:
         df = ticker.history(period='max', start=start,
                             end=end, rounding=True)
 
-        # df.reset_index(inplace=True)
-        # print(df, df.columns)
-        # df.index.freq = 'd'
-        print(df)
-        # df.set_index('Date', inplace=True)
-        print(df, df.index.is_type_compatible('datetime64[D]'))
-        # df.insert(loc=0, column='Symbol', value=symbol)
-        # df['Date'] = df.index
         return df
 
 
