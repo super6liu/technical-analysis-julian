@@ -20,7 +20,11 @@ class History(Base):
                 Low DECIMAL(9, 2) UNSIGNED NOT NULL,
                 Close DECIMAL(9, 2) UNSIGNED NOT NULL,
                 Volume BIGINT UNSIGNED NOT NULL,
-                PRIMARY KEY (Date, Symbol)
+                PRIMARY KEY (Date, Symbol),
+                FOREIGN KEY (Symbol)
+                    REFERENCES Ticker(Symbol)
+                    ON DELETE CASCADE
+                    ON UPDATE RESTRICT
             );
         """
         await self._execute(sql)
