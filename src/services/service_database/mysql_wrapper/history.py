@@ -19,7 +19,7 @@ class History(Base):
                 High DECIMAL(9, 2) UNSIGNED NOT NULL,
                 Low DECIMAL(9, 2) UNSIGNED NOT NULL,
                 Close DECIMAL(9, 2) UNSIGNED NOT NULL,
-                Volume INT UNSIGNED NOT NULL,
+                Volume BIGINT UNSIGNED NOT NULL,
                 PRIMARY KEY (Date, Symbol)
             );
         """
@@ -33,6 +33,7 @@ class History(Base):
             INSERT IGNORE INTO {__class__.__name__} ({labels})
             VALUES ({values});
         """
+        df.index = df.index.astype(str).str[:10]
         await self._writemany(sql, df)
 
     async def read(self, symbol, start='2000-01-01', end=datetime.date.today()):

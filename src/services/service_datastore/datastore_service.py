@@ -38,6 +38,7 @@ class DatastoreService():
 
             history.drop(['Dividends', 'Stock Splits'],
                          axis='columns', inplace=True)
+            history.insert(0, 'Symbol', symbol, allow_duplicates=True)
             await self.__ds.history.create(history)
             await self.__ds.ticker.update(ticker)
         else:

@@ -13,7 +13,7 @@ class Ticker(Base):
     async def init(self):
         sql = f"""
             CREATE TABLE IF NOT EXISTS {__class__.__name__} (
-                Symbol VARCHAR(10) NOT NULL,
+                Symbol VARCHAR(5) NOT NULL,
                 Dividended DATE NULL,
                 Splitted DATE NULL,
                 Updated DATE NULL,
