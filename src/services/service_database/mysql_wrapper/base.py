@@ -1,15 +1,8 @@
-import os
-import json
+import asyncio
 import pandas as pd
 from aiomysql import create_pool, Pool
 
-# todo: get credential from config
-
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
-PATH = os.path.join(ROOT_DIR, 'credentials/mysql.json')
-with open(PATH) as file:
-    CREDENTIAL = json.load(file)
+from src.configs import Configs
 
 
 class Base():
@@ -50,22 +43,19 @@ class Base():
 
     async def __setup(self):
         if Base.pool is None:
-            Base.pool = await create_pool(user=CREDENTIAL['user'], db=CREDENTIAL['database'], host='127.0.0.1', password=CREDENTIAL['password'])
+            configs = Configs.configs("credentials", "mysql", "production")
+            Base.pool = await create_pool(user=configs('user'), db=configs('db'), host='127.0.0.1', password=configs('password'))
 
 
 if __name__ == '__main__':
-    pass
-    # async def main():
-    #     b = Base()
-    #     print(await b.create('table', ['Date', 'Symbol'], pd.DataFrame({'Date': ['2021-07-07', '2021-07-06'], 'Symbol': ['MSFT', 'MSFT']})))
-    #     return
-    #     await b.__setup()
-    #     x = pd.DataFrame({'Date': ['2021-07-07', '2021-07-06']})
-    #     print(x)
-    #     s = await b._read('SELECT * FROM History WHERE Date=%s', x)
-    #     print(s)
-    #     s = await b._write('UPDATE History SET Volume = 1 WHERE Date = "2021-07-07"', [None])
-    #     print(s)
+    async def main():
+        b = Base()
+        # x = pd.DataFrame({'Date': ['2021-07-07', '2021-07-06']})
+        # print(x)
+        # s = await b._read('SELECT * FROM History WHERE Date=%s', x)
+        # print(s)
+        # s = await b._write('UPDATE History SET Volume = 1 WHERE Date = "2021-07-07"', [None])
+        # print(s)
 
-    # loop = asyncio.get_event_loop()
-    # loop.run_until_complete(main())
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())

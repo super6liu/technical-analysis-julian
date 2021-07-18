@@ -3,8 +3,6 @@ import asyncio
 
 from src.services.service_database.mysql_wrapper.base import Base
 
-# todo: async
-
 
 class Ticker(Base):
     def __init__(self) -> None:
@@ -38,7 +36,7 @@ class Ticker(Base):
             SELECT * FROM {__class__.__name__}
             Where Symbol =  %s;
         """
-        return await self._read(sql, [symbol], index='Symbol', columns=('Symbol', 'Dividended', 'Splitted', 'Updated'), types=('str', 'datetime64[D]', 'datetime64[D]', 'datetime64[D]'))
+        return await self._read(sql, [symbol], index='Symbol', columns=('Symbol', 'Dividended', 'Splitted', 'Updated'))
 
     async def update(self, df: pd.DataFrame):
         sql = f"""
@@ -64,7 +62,7 @@ class Ticker(Base):
 if __name__ == '__main__':
     async def main():
         df = pd.DataFrame({'Dividended': ['2021-05-03'], 'Splitted': ['2021-05-03'],
-                        'Updated': ['2021-05-03'], 'Symbol': ['MSFT'], 'Something': ['Test']}).set_index('Symbol')
+                           'Updated': ['2021-05-03'], 'Symbol': ['MSFT'], 'Something': ['Test']}).set_index('Symbol')
         df.drop('Something', axis='columns', inplace=True)
         print(df)
 
@@ -74,7 +72,7 @@ if __name__ == '__main__':
         print(await t.read('MSFT'))
 
         df = pd.DataFrame({'Symbol': ['MSFT'], 'Dividended': [
-                        '2021-05-03'], 'Splitted': ['2021-05-04'], 'Updated': ['2021-06-03']}).set_index('Symbol')
+            '2021-05-03'], 'Splitted': ['2021-05-04'], 'Updated': ['2021-06-03']}).set_index('Symbol')
         print(df)
         await t.update(df)
         print(await t.read('MSFT'))
