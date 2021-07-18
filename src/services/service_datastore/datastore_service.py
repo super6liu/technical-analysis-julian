@@ -1,10 +1,10 @@
 from datetime import date
 import pandas as pd
-import asyncio
 
 from src.services.service_database import DatabaseService
 from src.services.service_history import HistoryService
 from src.services.service_symbol import SymbolService
+from src.utils.asyncio_utils import run_async_main
 
 
 class DatastoreService():
@@ -95,5 +95,4 @@ if __name__ == '__main__':
         await ds.update('MSFT')
         print(await ds.read('MSFT'))
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    run_async_main(main)

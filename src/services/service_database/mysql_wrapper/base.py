@@ -1,8 +1,10 @@
 import asyncio
 import pandas as pd
 from aiomysql import create_pool, Pool
+from os import environ
 
 from src.configs import Configs
+from src.utils.asyncio_utils import run_async_main
 
 
 class Base():
@@ -43,7 +45,10 @@ class Base():
 
     async def __setup(self):
         if Base.pool is None:
-            configs = Configs.configs("credentials", "mysql", "production")
+            if environ["DEBUG"]:
+                configs = Configs.configs("credentials", "mysql", "test")
+            else:
+                configs = Configs.configs("credentials", "mysql", "production")
             Base.pool = await create_pool(user=configs('user'), db=configs('db'), host='127.0.0.1', password=configs('password'))
 
 
@@ -57,5 +62,4 @@ if __name__ == '__main__':
         # s = await b._write('UPDATE History SET Volume = 1 WHERE Date = "2021-07-07"', [None])
         # print(s)
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    run_async_main(main)

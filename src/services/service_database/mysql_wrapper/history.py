@@ -1,9 +1,9 @@
 from numpy import number
 import pandas as pd
 import datetime
-import asyncio
 
 from src.services.service_database.mysql_wrapper.base import Base
+from src.utils.asyncio_utils import run_async_main
 
 
 class History(Base):
@@ -46,7 +46,7 @@ class History(Base):
             SELECT * FROM {__class__.__name__}
             Where Symbol = %s AND Date >= %s AND Date <= %s;
         """
-        return await self._read(sql, [symbol, start, end], index="Date", columns=("Date", 'Symbol', 'Open', "High", 'Low', "Close", 'Volume'), types=[])
+        return await self._read(sql, [symbol, start, end], index="Date", columns=("Date", 'Symbol', 'Open', "High", 'Low', "Close", 'Volume'))
 
     async def update(self, df: pd.DataFrame):
         sql = f"""
@@ -67,7 +67,7 @@ class History(Base):
                 Close = Close - %s
             WHERE Symbol = %s AND Date > %s;
         """
-        await self._write(sql, [dividend.item(), dividend.item(), symbol, '2021-05-19'])
+        await self._write(sql, [dividend, dividend, symbol, '2021-05-19'])
 
     async def update_split(self, symbol: str, split: number):
         sql = f"""
@@ -78,7 +78,7 @@ class History(Base):
                 Close = Close / @split
             WHERE Symbol = %s;
         """
-        await self._write(sql, [split.item(), symbol])
+        await self._write(sql, [split, symbol])
 
     async def delete(self, symbol):
         sql = f"""
@@ -119,5 +119,4 @@ if __name__ == '__main__':
         await c.delete('MSFT')
         print(await c.read('MSFT'))
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    run_async_main(main)
