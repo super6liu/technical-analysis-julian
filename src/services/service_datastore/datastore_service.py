@@ -4,7 +4,7 @@ import pandas as pd
 from src.services.service_database import DatabaseService
 from src.services.service_history import HistoryService
 from src.services.service_symbol import SymbolService
-from src.utils.asyncio_utils import run_async_main
+from src.utils.asyncio_utils import AsyncioUtils
 
 
 class DatastoreService():
@@ -26,8 +26,7 @@ class DatastoreService():
             ticker.set_index('Symbol', inplace=True)
             await self.__ds.ticker.create(ticker)
 
-            ticker = await self.__ds.ticker.read(symbol)
-            history = self.__hs.history(symbol)
+            history = await self.__hs.history(symbol)
 
             lastDividendRow = history.query('Dividends > 0').last('1d')
             if not lastDividendRow.empty:
@@ -37,14 +36,14 @@ class DatastoreService():
                 ticker.at[symbol, 'Splitted'] = lastSplitRow.index[0]
             ticker.at[symbol, 'Updated'] = date.today()
 
-            history.drop(['Dividends', 'Stock Splits'],
-                         axis='columns', inplace=True)
-            history.insert(0, 'Symbol', symbol, allow_duplicates=True)
+            history.drop(['Dividends', 'Stock Splits'], axis='columns', inplace=True)
             await self.__ds.history.create(history)
             await self.__ds.ticker.update(ticker)
         else:
             updated = ticker['Updated'][0]
-            history = self.__hs.history(symbol, updated)
+            history = await self.__hs.history(symbol, start = updated)
+            if history.empty:
+                return
 
             # dividend & split
             newDividendRow = history.query('Dividends > 0').first('1d')
@@ -67,7 +66,6 @@ class DatastoreService():
             ticker.at[symbol, 'Updated'] = date.today()
 
             history.drop(['Dividends', 'Stock Splits'], axis='columns', inplace=True)
-            history.insert(0, 'Symbol', symbol, allow_duplicates=True)
             await self.__ds.history.create(history)
             await self.__ds.ticker.update(ticker)
 
@@ -95,4 +93,4 @@ if __name__ == '__main__':
         await ds.update('MSFT')
         print(await ds.read('MSFT'))
 
-    run_async_main(main)
+    AsyncioUtils.run_async_main(main)

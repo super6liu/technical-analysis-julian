@@ -4,7 +4,7 @@ from aiomysql import create_pool, Pool
 from os import environ
 
 from src.configs import Configs
-from src.utils.asyncio_utils import run_async_main
+from src.utils.asyncio_utils import AsyncioUtils
 
 
 class Base():
@@ -62,4 +62,4 @@ if __name__ == '__main__':
         # s = await b._write('UPDATE History SET Volume = 1 WHERE Date = "2021-07-07"', [None])
         # print(s)
 
-    run_async_main(main)
+    AsyncioUtils.run_async_main(main)

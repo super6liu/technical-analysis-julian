@@ -7,9 +7,9 @@ class TestDatastoreService(unittest.TestCase):
     def setUp(self) -> None:
         return super().setUp()
     
-    def test_read(self):
-        ds = DatastoreService()
-        pass
+    # def test_read(self):
+    #     ds = DatastoreService()
+    #     pass
 
     def test_update(self):
         pass

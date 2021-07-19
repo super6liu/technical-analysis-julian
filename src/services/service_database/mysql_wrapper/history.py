@@ -3,7 +3,7 @@ import pandas as pd
 import datetime
 
 from src.services.service_database.mysql_wrapper.base import Base
-from src.utils.asyncio_utils import run_async_main
+from src.utils.asyncio_utils import AsyncioUtils
 
 
 class History(Base):
@@ -67,7 +67,8 @@ class History(Base):
                 Close = Close - %s
             WHERE Symbol = %s AND Date > %s;
         """
-        await self._write(sql, [dividend, dividend, symbol, '2021-05-19'])
+        str_dividend = str(dividend)
+        await self._write(sql, [str_dividend, str_dividend, symbol, start])
 
     async def update_split(self, symbol: str, split: number):
         sql = f"""
@@ -78,7 +79,7 @@ class History(Base):
                 Close = Close / @split
             WHERE Symbol = %s;
         """
-        await self._write(sql, [split, symbol])
+        await self._write(sql, [str(split), symbol])
 
     async def delete(self, symbol):
         sql = f"""
@@ -119,4 +120,4 @@ if __name__ == '__main__':
         await c.delete('MSFT')
         print(await c.read('MSFT'))
 
-    run_async_main(main)
+    AsyncioUtils.run_async_main(main)

@@ -1,7 +1,7 @@
 import pandas as pd
 
 from src.services.service_database.mysql_wrapper.base import Base
-from src.utils.asyncio_utils import run_async_main
+from src.utils.asyncio_utils import AsyncioUtils
 
 
 class Ticker(Base):
@@ -80,4 +80,4 @@ if __name__ == '__main__':
         await t.delete('MSFT')
         print(await t.read('MSFT'))
 
-    run_async_main(main)
+    AsyncioUtils.run_async_main(main)
