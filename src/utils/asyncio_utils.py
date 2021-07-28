@@ -20,6 +20,6 @@ class AsyncioUtils:
         loop.run_until_complete(func())
 
     @staticmethod
-    def asyncify(func: Callable[[Any], T], *args, **kwargs):
+    def asyncize(func: Callable[[Any], T], *args, **kwargs):
         loop = get_event_loop()
         return loop.run_in_executor(AsyncioUtils.__thread_pool_executor, lambda : func(*args, **kwargs))

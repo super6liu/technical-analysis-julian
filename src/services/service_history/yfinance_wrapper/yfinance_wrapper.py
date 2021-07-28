@@ -38,7 +38,7 @@ class YfinanceWrapper:
             end = date.today()
 
         ticker = yf.Ticker(symbol, self.__session)
-        df = await AsyncioUtils.asyncify(ticker.history, period='max', start=start, end=end, rounding=True)
+        df = await AsyncioUtils.asyncize(ticker.history, period='max', start=start, end=end, rounding=True)
         df.dropna(inplace=True)
         df = df[~df.index.duplicated(keep='first')]
         df.insert(0, 'Symbol', symbol, allow_duplicates=True)

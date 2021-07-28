@@ -5,7 +5,8 @@ from src.services.service_database import DatabaseService
 from src.services.service_history import HistoryService
 from src.services.service_symbol import SymbolService
 from src.utils.asyncio_utils import AsyncioUtils
-
+from src.utils.date_utiles import DateUtils
+from src.constants import Env
 
 class DatastoreService():
     def __init__(self, databaseService: DatabaseService, historyService: HistoryService, symbolService: SymbolService) -> None:
@@ -41,6 +42,9 @@ class DatastoreService():
             await self.__ds.ticker.update(ticker)
         else:
             updated = ticker['Updated'][0]
+            if (updated >= DateUtils.latest_weekday()):
+                return
+
             history = await self.__hs.history(symbol, start = updated)
             if history.empty:
                 return
@@ -83,7 +87,7 @@ class DatastoreService():
 
 if __name__ == '__main__':
     async def main():
-        ss = await DatabaseService().init()
+        ss = await DatabaseService().init(Env.TEST)
         ds = DatastoreService(
             ss, HistoryService(), SymbolService())
         await ds.delete('MSFT')

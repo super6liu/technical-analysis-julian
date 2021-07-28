@@ -12,7 +12,7 @@ from src.utils.asyncio_utils import AsyncioUtils
 
 class GetAllTickersWrapper:
     async def symbols(self) -> Generator[str, None, None]:
-        tickers = await AsyncioUtils.asyncify(gt.get_tickers)
+        tickers = await AsyncioUtils.asyncize(gt.get_tickers)
         return map(lambda x: x.strip().upper(), tickers)
 
 
