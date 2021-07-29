@@ -86,9 +86,9 @@ class TestHistory(IsolatedAsyncioTestCase):
         df = await self.instance.read('MSFT')
         input = DataFrame({'Date': [date(2021, 5, 9), date(2021, 5, 10), date(2021, 5, 11)],
                            'Symbol': ['MSFT', 'MSFT', 'MSFT'],
-                           'Open': [Decimal("250.87"), Decimal("250.36"), Decimal("250.36")],
-                           'High': [Decimal("251.73"), Decimal("251.22"), Decimal("251.22")],
-                           'Low': [Decimal("247.12"), Decimal("246.62"), Decimal("246.62")],
+                           'Open': [Decimal("250.87"), Decimal("250.362536"), Decimal("250.362536")],
+                           'High': [Decimal("251.73"), Decimal("251.220796"), Decimal("251.220796")],
+                           'Low': [Decimal("247.12"), Decimal("246.620121"), Decimal("246.620121")],
                            'Close': [Decimal("247.18"), Decimal("246.68"), Decimal("246.68")],
                            'Volume': [29299900, 29299900, 29299900],
                            'Dividends': [Decimal("0"), Decimal("0"), Decimal("0")],
@@ -116,8 +116,8 @@ class TestHistory(IsolatedAsyncioTestCase):
         df = await self.instance.read('MSFT')
         input = DataFrame({'Date': [date(2021, 5, 9), date(2021, 5, 10), date(2021, 5, 11)],
                            'Symbol': ['MSFT', 'MSFT', 'MSFT'],
-                           'Open': [Decimal("125.44"), Decimal("125.44"), Decimal("125.44")],
-                           'High': [Decimal("125.87"), Decimal("125.87"), Decimal("125.87")],
+                           'Open': [Decimal("125.435"), Decimal("125.435"), Decimal("125.435")],
+                           'High': [Decimal("125.865"), Decimal("125.865"), Decimal("125.865")],
                            'Low': [Decimal("123.56"), Decimal("123.56"), Decimal("123.56")],
                            'Close': [Decimal("123.59"), Decimal("123.59"), Decimal("123.59")],
                            'Volume': [29299900, 29299900, 29299900],

@@ -14,10 +14,10 @@ class History(BaseTable):
             CREATE TABLE IF NOT EXISTS {__class__.__name__} (
                 Symbol VARCHAR(5) NOT NULL,
                 Date DATE NOT NULL,
-                Open DECIMAL(9, 2) UNSIGNED NOT NULL,
-                High DECIMAL(9, 2) UNSIGNED NOT NULL,
-                Low DECIMAL(9, 2) UNSIGNED NOT NULL,
-                Close DECIMAL(9, 2) UNSIGNED NOT NULL,
+                Open DECIMAL(15, 6) UNSIGNED NOT NULL,
+                High DECIMAL(15, 6) UNSIGNED NOT NULL,
+                Low DECIMAL(15, 6) UNSIGNED NOT NULL,
+                Close DECIMAL(15, 6) UNSIGNED NOT NULL,
                 Volume BIGINT UNSIGNED NOT NULL,
                 PRIMARY KEY (Symbol, Date),
                 FOREIGN KEY (Symbol)
@@ -64,9 +64,6 @@ class History(BaseTable):
     async def create(self, df: DataFrame):
         if not df.index.names.__eq__(self.indexes) or any([not df.columns.__contains__(c) for c in self.columns]):
             raise ValueError()
-
-        df = df.copy()
-        df['Date'] = df['Date'].astype(str).str[:10]
 
         await self.executor.writemany(self.__sql_create, df[self.columns].to_records(index=False).tolist())
 

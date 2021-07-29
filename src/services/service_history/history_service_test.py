@@ -1,9 +1,10 @@
 from unittest import IsolatedAsyncioTestCase, main
 from datetime import date, datetime, timedelta, timezone, tzinfo
+from decimal import Decimal
 from unittest.case import skip
 import numpy as np
 
-import pandas as pd
+from pandas import DataFrame, MultiIndex, Series
 
 from src.services.service_history import HistoryService
 
@@ -39,6 +40,17 @@ class TestHistoryService(IsolatedAsyncioTestCase):
     def setUpClass(cls) -> None:
         cls.__hs = HistoryService()
 
+    async def test_schema(self):
+        df = await self.__hs.history('MSFT', '2021-05-17', '2021-05-20')
+        self.assertEqual(len(df), 3)
+        self.assertTrue(isinstance(df.index, MultiIndex))
+        self.assertListEqual(df.index.names, ['Symbol', 'Date'])
+        self.assertListEqual(df.columns.tolist(), ['Symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits'])
+        self.assertTrue(isinstance(df['Symbol'][0], str))
+        self.assertTrue(isinstance(df['Date'][0], date))
+        self.assertTrue(isinstance(df['Open'][0], Decimal))
+        self.assertTrue(isinstance(df['Volume'][0], int))
+
     '''
                     Symbol    Open    High     Low   Close      Volume  Dividends  Stock Splits
     Date                                                                                  
@@ -64,8 +76,8 @@ class TestHistoryService(IsolatedAsyncioTestCase):
     '''
     async def test_drop_na(self):
         dfCoroutine = self.__hs.history('MSFT', '2021-05-17', '2021-05-19')
-        expected = pd.DataFrame({
-            'Date':  pd.Series(['2021-05-17', '2021-05-18'], dtype='datetime64[ns]'),
+        expected = DataFrame({
+            'Date':  Series(['2021-05-17', '2021-05-18'], dtype='datetime64[ns]'),
             'Symbol': ['MSFT', 'MSFT'],    
             'Open': [np.float64(245.98), np.float64(245.70)],    
             'High': [np.float64(246.02), np.float64(245.84)],     

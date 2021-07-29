@@ -61,10 +61,6 @@ class Ticker(BaseTable):
         return df[self.columns]
 
     async def update(self, df: DataFrame):
-        df = df.copy()
-        for c in ("Dividended", "Splitted", "Updated"):
-            df[c] = df[c].astype(str).str[:10]
-
         await self.executor.writemany(self.__sql_update, df[["Dividended", "Splitted", "Updated", "Symbol"]].to_records(index=False).tolist())
 
     async def delete(self, *symbols: Tuple[str]):
