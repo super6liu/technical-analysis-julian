@@ -1,5 +1,5 @@
 from datetime import date
-from pandas import DataFrame
+from pandas import DataFrame, Timestamp
 from unittest import IsolatedAsyncioTestCase, main
 
 from utils.asyncio_utils import T
@@ -17,6 +17,10 @@ class TestTicker(IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         await super().asyncSetUp()
         await self.instance.init()
+        sql = f"""
+            DELETE IGNORE FROM {self.instance.__class__.__name__};
+        """
+        await self.instance.executor.execute(sql)
 
     async def asyncTearDown(self) -> None:
         await super().asyncTearDown()
@@ -27,8 +31,8 @@ class TestTicker(IsolatedAsyncioTestCase):
         await self.instance.executor.execute(sql)
 
     async def test_init(self):
-        self.assertListEqual(self.instance.indexes, ["Symbol"])
-        self.assertListEqual(self.instance.columns, ['Symbol', 'Dividended', 'Splitted', 'Updated'])
+        self.assertIsNone(self.instance.index)
+        self.assertListEqual(self.instance.columns, ['Dividended', 'Splitted', 'Updated'])
 
         sql = f"""
             SELECT 1 FROM {self.instance.__class__.__name__};
@@ -42,31 +46,28 @@ class TestTicker(IsolatedAsyncioTestCase):
         self.assertListEqual(df.columns.tolist(), self.instance.columns)
 
     async def test_create(self):
-        input = DataFrame({'Dividended': [date(2021,5,3)], 'Splitted': [date(2021,5,3)],
-                           'Updated': [date(2021,5,3)], 'Symbol': ['MSFT'], 'Something': ['Test']})
-        input.set_index('Symbol', drop=False, inplace=True)
-        await self.instance.create(input)
+        input = DataFrame({'Dividended': [Timestamp(2021, 5, 3)], 'Splitted': [Timestamp(2021, 5, 3)],
+                           'Updated': [Timestamp(2021, 5, 3)], 'Symbol': ['MSFT'], 'Something': ['Test']})
+        await self.instance.create('MSFT', input)
 
         df = await self.instance.read('MSFT')
         self.assertTrue(df.equals(input[self.instance.columns]))
 
     async def test_update(self):
-        input = DataFrame({'Dividended': [date(2021,5,3)], 'Splitted': [date(2021,5,3)],
-                           'Updated': [date(2021,5,3)], 'Symbol': ['MSFT'], 'Something': ['Test']})
-        input.set_index('Symbol', drop=False, inplace=True)
-        await self.instance.create(input)
+        input = DataFrame({'Dividended': [Timestamp(2021, 5, 3)], 'Splitted': [Timestamp(2021, 5, 3)],
+                           'Updated': [Timestamp(2021, 5, 3)], 'Symbol': ['MSFT'], 'Something': ['Test']})
+        await self.instance.create("MSFT", input)
         
-        input.loc['MSFT', 'Updated'] = date(2021, 6 ,3)
-        await self.instance.update(input)
+        input.loc[0, 'Updated'] = Timestamp(2021, 6, 3)
+        await self.instance.update("MSFT", input)
 
         df = await self.instance.read('MSFT')
         self.assertTrue(df.equals(input[self.instance.columns]))
 
     async def test_delete(self):
-        input = DataFrame({'Dividended': [date(2021,5,3)], 'Splitted': [date(2021,5,3)],
-                           'Updated': [date(2021,5,3)], 'Symbol': ['MSFT']})
-        input.set_index('Symbol', drop=False, inplace=True)
-        await self.instance.create(input)
+        input = DataFrame({'Dividended': [Timestamp(2021, 5, 3)], 'Splitted': [Timestamp(2021, 5, 3)],
+                           'Updated': [Timestamp(2021, 5, 3)], 'Symbol': ['MSFT']})
+        await self.instance.create('MSFT', input)
 
         df = await self.instance.read('MSFT')
         self.assertTrue(df.equals(input[self.instance.columns]))

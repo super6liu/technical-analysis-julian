@@ -13,9 +13,7 @@ class AsyncioUtils:
     __thread_pool_executor: ThreadPoolExecutor = ThreadPoolExecutor()
 
     @staticmethod
-    def run_async_main(func: CoroutineType, debug: bool = True):
-        if debug:
-            environ['DEBUG'] = 'True'
+    def run_async_main(func: CoroutineType):
         loop = get_event_loop()
         loop.run_until_complete(func())
 

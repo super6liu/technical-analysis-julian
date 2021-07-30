@@ -12,9 +12,9 @@ Symbol
 MSFT      MSFT    Value
 """
 class BaseTable(ABC):
-    def __init__(self, index: List[str], columns: List[str], env: Env = Env.PRODUCETION) -> None:
+    def __init__(self, index: str, columns: List[str], env: Env = Env.PRODUCETION) -> None:
         super().__init__()
-        self.indexes = index
+        self.index = index
         self.columns = columns
         self.env = env
 

@@ -1,8 +1,8 @@
 from typing import Any
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 import requests_cache
-from pandas import DataFrame
+from pandas import DataFrame, Series, to_datetime
 import yfinance as yf
 
 
@@ -42,31 +42,7 @@ class YfinanceWrapper:
         ticker = yf.Ticker(symbol, self.__session)
         df = await AsyncioUtils.asyncize(ticker.history, period='max', start=start, end=end)
         df.dropna(inplace=True)
-        df = df[~df.index.duplicated(keep='first')]
-
-        df.reset_index(inplace=True)
-        df = DataFrame({c: map(self.__converter(c), df[c]) for c in df.columns})
-        df.insert(0, 'Symbol', symbol, allow_duplicates=True)
-        df.set_index(["Symbol", "Date"], drop=False, inplace=True)
-        return df
-
-    def __converter(self, col: str):
-        if col == "Date":
-            return self.__cast_date
-
-        if col == "Volume":
-            return int
-
-        return self.__cast_decimal
-
-    def __cast_date(self, x: Any):
-        return x.date()
-
-    def __cast_decimal(self, x: Any):
-        return Decimal("%.6f" % x)
-
-    def __cast_int(self, x: Any):
-        return int(x)
+        return df[~df.index.duplicated(keep='first')]
 
 if __name__ == "__main__":
     async def main():

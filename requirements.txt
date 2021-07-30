@@ -1,5 +1,6 @@
 aiomysql==0.0.21
 autopep8==1.5.7
+backtrader==1.9.76.123
 certifi==2021.5.30
 chardet==4.0.0
 cycler==0.10.0
