@@ -1,9 +1,9 @@
 import unittest
 from unittest.mock import MagicMock
 
-from src.services.service_datastore.datastore_service import DatastoreService
+from src.data.datastore.datastore import Datastore
 
-class TestDatastoreService(unittest.TestCase):
+class TestDatastore(unittest.TestCase):
     def setUp(self) -> None:
         return super().setUp()
     

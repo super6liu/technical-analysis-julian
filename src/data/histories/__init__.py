@@ -1,4 +1,4 @@
-from .yfinance_wrapper import YfinanceWrapper as HistoryService
+from .yfinance_wrapper import YfinanceWrapper as Histories
 
 """
 panda.DataFrame:

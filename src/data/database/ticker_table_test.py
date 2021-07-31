@@ -4,15 +4,15 @@ from unittest import IsolatedAsyncioTestCase, main
 
 from utils.asyncio_utils import T
 
-from .history import History
-from .ticker import Ticker
+from .history_table import HistoryTable
+from .ticker_table import TickerTable
 from src.constants import Env
 
 
-class TestTicker(IsolatedAsyncioTestCase):
+class TestTickerTable(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls):
-        cls.instance = Ticker(Env.TEST)
+        cls.instance = TickerTable(Env.TEST)
 
     async def asyncSetUp(self) -> None:
         await super().asyncSetUp()
@@ -25,7 +25,7 @@ class TestTicker(IsolatedAsyncioTestCase):
     async def asyncTearDown(self) -> None:
         await super().asyncTearDown()
         sql = f"""
-            DROP TABLE IF EXISTS {History.__name__};
+            DROP TABLE IF EXISTS {HistoryTable.__name__};
             DROP TABLE IF EXISTS {self.instance.__class__.__name__};
         """
         await self.instance.executor.execute(sql)

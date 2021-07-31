@@ -3,11 +3,11 @@ from numpy import dtype
 from pandas import DataFrame, Timestamp
 
 from src.utils.dataframe_utils import DataFrameUtils
-from src.services.service_database.base_table import BaseTable
+from src.data.database.base_table import BaseTable
 from src.constants import Env
 
 
-class Ticker(BaseTable):
+class TickerTable(BaseTable):
     def __init__(self, env: Env = Env.PRODUCETION) -> None:
         super().__init__(None, ["Dividended", "Splitted", "Updated"], env)
 

@@ -4,16 +4,16 @@ from numpy import float64, isclose
 from pandas import DataFrame, Timestamp
 from unittest import IsolatedAsyncioTestCase, main
 
-from .history import History
-from .ticker import Ticker
+from .history_table import HistoryTable
+from .ticker_table import TickerTable
 from src.constants import Env
 
 
-class TestHistory(IsolatedAsyncioTestCase):
+class TestHistoryTable(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls):
-        cls.fk = Ticker(Env.TEST)
-        cls.instance = History(Env.TEST)
+        cls.fk = TickerTable(Env.TEST)
+        cls.instance = HistoryTable(Env.TEST)
 
     async def asyncSetUp(self) -> None:
         await super().asyncSetUp()
@@ -32,7 +32,7 @@ class TestHistory(IsolatedAsyncioTestCase):
         await super().asyncTearDown()
         sql = f"""
             DROP TABLE IF EXISTS {self.instance.__class__.__name__};
-            DROP TABLE IF EXISTS {Ticker.__name__};
+            DROP TABLE IF EXISTS {TickerTable.__name__};
         """
         await self.instance.executor.execute(sql)
 

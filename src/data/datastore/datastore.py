@@ -1,15 +1,15 @@
 from datetime import date
 import pandas as pd
 
-from src.services.service_database import DatabaseService
-from src.services.service_history import HistoryService
-from src.services.service_symbol import SymbolService
+from src.data.database import Database
+from src.data.histories import Histories
+from src.data.symbols import Symbols
 from src.utils.asyncio_utils import AsyncioUtils
 from src.utils.date_utiles import DateUtils
 from src.constants import Env
 
-class DatastoreService():
-    def __init__(self, databaseService: DatabaseService, historyService: HistoryService, symbolService: SymbolService) -> None:
+class Datastore():
+    def __init__(self, databaseService: Database, historyService: Histories, symbolService: Symbols) -> None:
         self.__ds = databaseService
         self.__hs = historyService
         self.__ss = symbolService
@@ -87,9 +87,9 @@ class DatastoreService():
 
 if __name__ == '__main__':
     async def main():
-        ss = await DatabaseService().init(Env.TEST)
-        ds = DatastoreService(
-            ss, HistoryService(), SymbolService())
+        ss = await Database().init(Env.TEST)
+        ds = Datastore(
+            ss, Histories(), Symbols())
         await ds.delete('MSFT')
         await ds.update('MSFT')
         print(await ds.read('MSFT'))

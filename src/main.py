@@ -2,8 +2,8 @@ from datetime import datetime
 import backtrader as bt
 from pandas import DataFrame
 
-from src.services.service_database import DatabaseService
-from src.services.service_history import HistoryService
+from src.data.database import Database
+from src.data.histories import Histories
 from src.utils.asyncio_utils import AsyncioUtils
 from src.constants import Env
 import yfinance as yf
@@ -82,10 +82,10 @@ class TestStrategy(bt.Strategy):
 if __name__ == '__main__':
     async def main():
         start = datetime.now()
-        hs = HistoryService()
+        hs = Histories()
         df = await hs.history("MSFT")
         print("Download", datetime.now() - start)
-        ds = await DatabaseService(Env.TEST).init()
+        ds = await Database(Env.TEST).init()
         await ds.ticker.create("MSFT", DataFrame({"Dividended": [], "Splitted": [], "Updated": []}))
         print("Ticker", datetime.now() - start)
         await ds.history.create("MSFT", df)

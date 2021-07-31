@@ -1,11 +1,11 @@
 from unittest import IsolatedAsyncioTestCase, main
 
-from src.services.service_symbol import SymbolService
+from src.data.symbols import Symbols
 
 class TestSymbolService(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.__ss = SymbolService()
+        cls.__ss = Symbols()
         return super().setUpClass()
 
     async def test_symbols(self):

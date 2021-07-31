@@ -1,7 +1,7 @@
 from typing import List
 from abc import ABC, abstractmethod
 
-from src.services.service_database.mysql_wrapper.wrapper import Wrapper
+from src.data.database.mysql_wrapper.wrapper import Wrapper
 from src.constants import Env
 
 """

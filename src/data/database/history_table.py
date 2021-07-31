@@ -5,11 +5,11 @@ from datetime import date, datetime
 
 from pandas._libs.tslibs.timestamps import Timestamp
 
-from src.services.service_database.base_table import BaseTable
+from src.data.database.base_table import BaseTable
 from src.constants import Env
 
 
-class History(BaseTable):
+class HistoryTable(BaseTable):
     def __init__(self, env: Env = Env.PRODUCETION) -> None:
         super().__init__("Date", ["Open", "High", "Low", "Close", "Volume"], env)  
 

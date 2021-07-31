@@ -4,7 +4,7 @@ from unittest.case import skip
 from numpy import float64
 from pandas import Timestamp
 
-from src.services.service_history import HistoryService
+from src.data.histories import Histories
 
 '''
 auto_adjust
@@ -36,7 +36,7 @@ Date
 class TestHistoryService(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.__hs = HistoryService()
+        cls.__hs = Histories()
 
     async def test_schema(self):
         df = await self.__hs.history('MSFT', '2021-05-17', '2021-05-20')

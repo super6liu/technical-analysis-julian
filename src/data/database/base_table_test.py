@@ -1,6 +1,6 @@
 from unittest import IsolatedAsyncioTestCase, main
 
-from src.services.service_database.base_table import BaseTable
+from src.data.database.base_table import BaseTable
 from src.constants import Env
 
 
