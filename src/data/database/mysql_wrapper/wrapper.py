@@ -1,6 +1,6 @@
 from typing import Iterable
-from aiomysql import create_pool, Pool
 
+from aiomysql import Pool, create_pool
 from src.configs import Configs
 from src.constants import Env
 
@@ -11,7 +11,7 @@ class Wrapper():
     @staticmethod
     async def init(env: Env = Env.PRODUCETION):
         configs = Configs.configs("credentials", "mysql", env.value)
-        Wrapper.__pool = await create_pool(user=configs('user'), db=configs('db'), host='127.0.0.1', password=configs('password'))
+        Wrapper.__pool = await create_pool(user=configs('user'), db=configs('db'), host='127.0.0.1', password=configs('password'), echo=env != Env.PRODUCETION)
         return Wrapper()
 
     async def execute(self, sql: str):

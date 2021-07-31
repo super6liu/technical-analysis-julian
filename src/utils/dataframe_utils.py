@@ -1,5 +1,6 @@
 from pandas import DataFrame
 
+
 class DataFrameUtils():
     @staticmethod
     def copy_index_to_column(df: DataFrame) -> DataFrame:

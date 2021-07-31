@@ -1,8 +1,8 @@
 from typing import Generator
 
+from src.data.symbols.get_all_tickers_wrapper.get_tickers import get_tickers
 from src.utils.asyncio_utils import AsyncioUtils
 
-from src.data.symbols.get_all_tickers_wrapper.get_tickers import get_tickers
 # from get_all_tickers import get_tickers
 # fix get_all_tickers
 # https://github.com/shilewenuw/get_all_tickers/issues/12#issuecomment-851007438

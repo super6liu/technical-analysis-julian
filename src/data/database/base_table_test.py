@@ -1,7 +1,7 @@
 from unittest import IsolatedAsyncioTestCase, main
 
-from src.data.database.base_table import BaseTable
 from src.constants import Env
+from src.data.database.base_table import BaseTable
 
 
 class TestSymbolTable(IsolatedAsyncioTestCase):

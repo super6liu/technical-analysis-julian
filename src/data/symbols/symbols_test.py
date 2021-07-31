@@ -2,6 +2,7 @@ from unittest import IsolatedAsyncioTestCase, main
 
 from src.data.symbols import Symbols
 
+
 class TestSymbolService(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -13,7 +14,7 @@ class TestSymbolService(IsolatedAsyncioTestCase):
         self.assertGreaterEqual(len(symbols), 6000)
         self.assertFalse(any(" " in s for s in symbols))
         self.assertFalse(any(s.upper() != s for s in symbols))
-        self.assertFalse(any(len(s) > 5 for s in symbols))             
+        self.assertFalse(any(len(s) > 5 for s in symbols))
         self.assertIn('MSFT', symbols)
         self.assertIn('DIDI', symbols)
 

@@ -1,9 +1,9 @@
+from datetime import date, timedelta
 from unittest import IsolatedAsyncioTestCase, main
-from datetime import date, datetime, timedelta, timezone, tzinfo
 from unittest.case import skip
+
 from numpy import float64
 from pandas import Timestamp
-
 from src.data.histories import Histories
 
 '''
@@ -33,6 +33,8 @@ Date
 2021-05-18  245.70  245.84  242.34  242.52  20168000       0.00             0
 2021-05-19  239.31  243.23  238.60  243.12  25739800       0.56             0
 '''
+
+
 class TestHistoryService(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -42,7 +44,8 @@ class TestHistoryService(IsolatedAsyncioTestCase):
         df = await self.__hs.history('MSFT', '2021-05-17', '2021-05-20')
         self.assertEqual(len(df), 3)
         self.assertEqual(df.index.name, 'Date')
-        self.assertListEqual(df.columns.tolist(), ['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits'])
+        self.assertListEqual(df.columns.tolist(), [
+                             'Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits'])
         self.assertTrue(isinstance(df.index[0], Timestamp))
         self.assertTrue(isinstance(df['Open'][0], float64))
 
@@ -72,7 +75,6 @@ class TestHistoryService(IsolatedAsyncioTestCase):
     async def test_drop_na(self):
         df = await self.__hs.history('MSFT', '2021-05-17', '2021-05-19')
         self.assertEqual(len(df), 2)
-        
 
 
 if __name__ == "main":

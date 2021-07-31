@@ -1,10 +1,7 @@
-from typing import List, Tuple
-from numpy import dtype
-from pandas import DataFrame, Timestamp
 
-from src.utils.dataframe_utils import DataFrameUtils
-from src.data.database.base_table import BaseTable
+from pandas import DataFrame
 from src.constants import Env
+from src.data.database.base_table import BaseTable
 
 
 class TickerTable(BaseTable):
@@ -23,9 +20,9 @@ class TickerTable(BaseTable):
                 PRIMARY KEY (Symbol)
             ){" ENGINE=MEMORY" if self.env != Env.PRODUCETION else ""};
         """
-        await self.executor.execute(sql)     
+        await self.executor.execute(sql)
 
-    async def create(self, symbol:str, df: DataFrame):
+    async def insert(self, symbol: str, df: DataFrame):
         if any([not df.columns.__contains__(c) for c in self.columns]):
             raise ValueError()
 
@@ -43,7 +40,7 @@ class TickerTable(BaseTable):
             Where Symbol = '{symbol}';
         """
         rows = await self.executor.read(sql, [])
-        df = DataFrame.from_records(rows, columns=self.columns)        
+        df = DataFrame.from_records(rows, columns=self.columns)
         return df
 
     async def update(self, symbol: str, df: DataFrame):

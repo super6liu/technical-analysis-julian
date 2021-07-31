@@ -1,12 +1,12 @@
 import unittest
-from unittest.mock import MagicMock
 
 from src.data.datastore.datastore import Datastore
+
 
 class TestDatastore(unittest.TestCase):
     def setUp(self) -> None:
         return super().setUp()
-    
+
     # def test_read(self):
     #     ds = DatastoreService()
     #     pass
@@ -17,4 +17,3 @@ class TestDatastore(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

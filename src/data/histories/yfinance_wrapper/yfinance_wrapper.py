@@ -1,11 +1,8 @@
-from typing import Any
-from datetime import date, datetime
-from decimal import Decimal
+from datetime import date
+
 import requests_cache
-from pandas import DataFrame, Series, to_datetime
 import yfinance as yf
-
-
+from pandas import DataFrame
 from src.utils.asyncio_utils import AsyncioUtils
 
 '''
@@ -43,6 +40,7 @@ class YfinanceWrapper:
         df = await AsyncioUtils.asyncize(ticker.history, period='max', start=start, end=end)
         df.dropna(inplace=True)
         return df[~df.index.duplicated(keep='first')]
+
 
 if __name__ == "__main__":
     async def main():

@@ -1,18 +1,15 @@
+from datetime import date
 from decimal import Decimal
-from numpy import datetime64
+
 from pandas import DataFrame
-from datetime import date, datetime
-
-from pandas._libs.tslibs.timestamps import Timestamp
-
-from src.data.database.base_table import BaseTable
 from src.constants import Env
+from src.data.database.base_table import BaseTable
 
 
 class HistoryTable(BaseTable):
     def __init__(self, env: Env = Env.PRODUCETION) -> None:
-        super().__init__("Date", ["Open", "High", "Low", "Close", "Volume"], env)  
-
+        super().__init__(
+            "Date", ["Open", "High", "Low", "Close", "Volume"], env)
 
     async def init(self):
         await super().init()
@@ -35,7 +32,7 @@ class HistoryTable(BaseTable):
         """
         await self.executor.execute(sql)
 
-    async def create(self, symbol: str, df: DataFrame):
+    async def insert(self, symbol: str, df: DataFrame):
         if not df.index.names.__eq__(self.index) or any([not df.columns.__contains__(c) for c in self.columns]):
             raise ValueError()
 
@@ -54,7 +51,8 @@ class HistoryTable(BaseTable):
             Where Symbol = '{symbol}' AND Date >= %s AND Date <= %s;
         """
         rows = await self.executor.read(sql, [start, end])
-        df = DataFrame.from_records(rows, index=self.index, columns=[self.index] + self.columns)
+        df = DataFrame.from_records(rows, index=self.index, columns=[
+                                    self.index] + self.columns)
         return df
 
     async def update(self, *args, **kwargs):
@@ -82,5 +80,9 @@ class HistoryTable(BaseTable):
         """
         await self.executor.write(sql, [split])
 
-    async def delete(self, *args, **kwargs):
-        raise NotImplementedError("Should delete from Ticker on FK.")
+    async def delete(self, symbol: str):
+        sql = f"""
+            DELETE FROM {__class__.__name__}
+            WHERE Symbol = '{symbol}';
+        """
+        await self.executor.execute(sql)

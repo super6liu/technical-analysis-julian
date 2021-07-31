@@ -1,5 +1,5 @@
 from configparser import ConfigParser
-from os import path, listdir
+from os import listdir, path
 from typing import Dict
 
 

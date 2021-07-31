@@ -1,12 +1,13 @@
 from datetime import datetime
+
 import backtrader as bt
 from pandas import DataFrame
 
+from src.constants import Env
 from src.data.database import Database
 from src.data.histories import Histories
 from src.utils.asyncio_utils import AsyncioUtils
-from src.constants import Env
-import yfinance as yf
+
 
 class TestStrategy(bt.Strategy):
     

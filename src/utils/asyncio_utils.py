@@ -1,10 +1,7 @@
 from asyncio import get_event_loop
-from os import environ
-from types import CoroutineType
 from concurrent.futures import ThreadPoolExecutor
-
-from typing import Any, TypeVar, Callable
-
+from types import CoroutineType
+from typing import Any, Callable, TypeVar
 
 T = TypeVar('T')
 

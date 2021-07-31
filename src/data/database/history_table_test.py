@@ -1,12 +1,13 @@
-from unittest.case import skip
 from datetime import date
+from unittest import IsolatedAsyncioTestCase, main
+from unittest.case import skip
+
 from numpy import float64, isclose
 from pandas import DataFrame, Timestamp
-from unittest import IsolatedAsyncioTestCase, main
+from src.constants import Env
 
 from .history_table import HistoryTable
 from .ticker_table import TickerTable
-from src.constants import Env
 
 
 class TestHistoryTable(IsolatedAsyncioTestCase):
@@ -19,8 +20,8 @@ class TestHistoryTable(IsolatedAsyncioTestCase):
         await super().asyncSetUp()
         await self.fk.init()
         ticker = DataFrame({'Dividended': [Timestamp(2021, 5, 3)], 'Splitted': [Timestamp(2021, 5, 3)],
-                           'Updated': [Timestamp(2021, 5, 3)], 'Symbol': ['MSFT'], 'Something': ['Test']}).set_index('Symbol', drop=False)
-        await self.fk.create('MSFT', ticker)
+                            'Updated': [Timestamp(2021, 5, 3)], 'Symbol': ['MSFT'], 'Something': ['Test']}).set_index('Symbol', drop=False)
+        await self.fk.insert('MSFT', ticker)
 
         await self.instance.init()
         sql = f"""
@@ -38,7 +39,8 @@ class TestHistoryTable(IsolatedAsyncioTestCase):
 
     async def test_init(self):
         self.assertEqual(self.instance.index, "Date")
-        self.assertListEqual(self.instance.columns, ["Open", "High", "Low", "Close", "Volume"])
+        self.assertListEqual(self.instance.columns, [
+                             "Open", "High", "Low", "Close", "Volume"])
 
         sql = f"""
             SELECT 1 FROM {self.instance.__class__.__name__};
@@ -64,7 +66,7 @@ class TestHistoryTable(IsolatedAsyncioTestCase):
                            'Stock Splits': [float64("0")]
                            })
         input.set_index(["Date"], drop=False, inplace=True)
-        await self.instance.create('MSFT', input)
+        await self.instance.insert('MSFT', input)
 
         df = await self.instance.read('MSFT')
         self.assertTrue(df.index.equals(input.index))
@@ -83,7 +85,7 @@ class TestHistoryTable(IsolatedAsyncioTestCase):
                            'Stock Splits': [float64("0"), float64("0"), float64("0")]
                            })
         input.set_index(["Date"], drop=False, inplace=True)
-        await self.instance.create("MSFT", input)
+        await self.instance.insert("MSFT", input)
 
         await self.instance.update_dividend("MSFT", 0.5, date(2021, 5, 10))
 
@@ -115,7 +117,7 @@ class TestHistoryTable(IsolatedAsyncioTestCase):
                            'Stock Splits': [float64("0"), float64("0"), float64("0")]
                            })
         input.set_index(["Date"], drop=False, inplace=True)
-        await self.instance.create("MSFT", input)
+        await self.instance.insert("MSFT", input)
 
         await self.instance.update_split("MSFT", 2)
 
@@ -149,7 +151,7 @@ class TestHistoryTable(IsolatedAsyncioTestCase):
                            'Stock Splits': [float64("0")]
                            })
         input.set_index(["Date"], drop=False, inplace=True)
-        await self.instance.create(input)
+        await self.instance.insert(input)
 
         await self.fk.delete("MSFT")
 
