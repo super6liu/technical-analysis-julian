@@ -1,6 +1,9 @@
-from datetime import date
+import sys
+from asyncio import create_task
+from datetime import date, datetime
+from typing import Tuple
 
-from pandas import Series
+from pandas import DataFrame, Series
 from src.constants import Env
 from src.data.database import Database
 from src.data.histories import Histories
@@ -22,12 +25,21 @@ class Datastore():
     async def read(self, symbol: str):
         return await self.__database.history.read(symbol)
 
-    async def backfill(self):
-        symbols = self.__symbols.symbols()
-        for s in symbols:
-            await self.__update(s)
-            if self.__env == Env.TEST:
-                break
+    async def backfill(self, *symbols: Tuple[str]):
+        begin = datetime.now()
+        if not symbols:
+            symbols = await self.__symbols.symbols()
+        if (self.__env == Env.TEST):
+            symbols = symbols[:100]
+
+        trimmed = map(lambda x: x.strip().upper().replace("/", "-"), symbols)        
+        tasks = map(lambda s: create_task(self.update(s), name=s), trimmed)
+
+        async for i in AsyncioUtils.task_queue(tasks):
+            progress = i * 100 // len(symbols)
+            sys.stdout.write('\r{0}: [{1}{2}] {3}%'.format("Backfill", '#'*(progress//2), '-'*(50-progress//2), progress))
+
+        print("\nTime consumed:", datetime.now() - begin)
 
     async def delete(self, symbol: str):
         # FK CASCADE to History table
@@ -39,7 +51,9 @@ class Datastore():
     async def update(self, symbol: str):
         ticker = await self.__database.ticker.read(symbol)
         if ticker.empty:
-            ticker.loc[0] = Series()
+            ticker = DataFrame({'Dividended':  Series([None], dtype='datetime64[D]'),
+                                'Splitted':  Series([None], dtype='datetime64[D]'),
+                                'Updated':  Series([None], dtype='datetime64[D]')})
             history = await self.__histories.history(symbol)
 
             lastDividendRow = history.query('Dividends > 0').last('1d')
@@ -84,16 +98,18 @@ class Datastore():
             await self.__database.history.insert(symbol, history)
             await self.__database.ticker.update(symbol, ticker)
 
-
 if __name__ == '__main__':
     async def main():
         ds = Datastore(Env.TEST)
         await ds.init()
         await ds.delete('MSFT')
-        await ds.update('MSFT')
-        print(await ds.read('MSFT'))
 
-        await ds.update('MSFT')
-        print(await ds.read('MSFT'))
+        # await ds.update('MSFT')
+        # print(await ds.read('MSFT'))
+
+        # await ds.update('MSFT')
+        # print(await ds.read('MSFT'))
+
+        await ds.backfill()
 
     AsyncioUtils.run_async_main(main)

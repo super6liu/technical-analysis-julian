@@ -1,4 +1,4 @@
-from typing import Generator
+from typing import List
 
 from src.data.symbols.get_all_tickers_wrapper.get_tickers import get_tickers
 from src.utils.asyncio_utils import AsyncioUtils
@@ -12,9 +12,8 @@ from src.utils.asyncio_utils import AsyncioUtils
 
 
 class GetAllTickersWrapper:
-    async def symbols(self) -> Generator[str, None, None]:
-        tickers = await AsyncioUtils.asyncize(get_tickers)
-        return map(lambda x: x.strip().upper(), tickers)
+    async def symbols(self) -> List[str]:
+        return await AsyncioUtils.asyncize(get_tickers)
 
 
 if __name__ == "__main__":

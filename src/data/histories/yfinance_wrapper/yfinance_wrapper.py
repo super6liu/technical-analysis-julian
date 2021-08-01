@@ -32,12 +32,9 @@ class YfinanceWrapper:
         self.__session = requests_cache.CachedSession('yfinance.cache')
         self.__session.headers['User-agent'] = 'technical-analysis-julian/1.0'
 
-    async def history(self, symbol: str, start: date = None, end: date = None) -> DataFrame:
-        if not start is None and end is None:
-            end = date.today()
-
+    async def history(self, symbol: str, start: str = "1950-01-01", end: str = str(date.today())) -> DataFrame:
         ticker = yf.Ticker(symbol, self.__session)
-        df = await AsyncioUtils.asyncize(ticker.history, period='max', start=start, end=end)
+        df = await AsyncioUtils.asyncize(ticker.history, start=start, end=end)
         df.dropna(inplace=True)
         return df[~df.index.duplicated(keep='first')]
 
