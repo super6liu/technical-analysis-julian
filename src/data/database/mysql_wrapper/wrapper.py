@@ -12,7 +12,7 @@ class Wrapper():
     async def init(env: Env = Env.PRODUCETION):
         if not Wrapper.__pool:
             configs = Configs.configs("credentials", "mysql", env.value)
-            Wrapper.__pool = await create_pool(user=configs('user'), db=configs('db'), host='127.0.0.1', password=configs('password'), echo=env != Env.PRODUCETION)
+            Wrapper.__pool = await create_pool(user=configs('user'), db=configs('db'), host='127.0.0.1', password=configs('password'), echo=True)
         return Wrapper()
 
     async def execute(self, sql: str):

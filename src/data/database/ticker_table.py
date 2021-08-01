@@ -43,6 +43,13 @@ class TickerTable(BaseTable):
         df = DataFrame.from_records(rows, columns=self.columns)
         return df
 
+    async def read_symbols(self):
+        sql = f"""
+            SELECT DISTINCT(Symbol) FROM {__class__.__name__};
+        """
+        rows = await self.executor.read(sql, [])
+        return tuple(map(lambda x: x[0], rows))
+
     async def update(self, symbol: str, df: DataFrame):
         set = ", ".join([f"{c} = %s" for c in self.columns])
         sql = f"""

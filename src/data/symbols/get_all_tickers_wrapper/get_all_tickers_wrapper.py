@@ -13,7 +13,8 @@ from src.utils.asyncio_utils import AsyncioUtils
 
 class GetAllTickersWrapper:
     async def symbols(self) -> List[str]:
-        return await AsyncioUtils.asyncize(get_tickers)
+        tickers = await AsyncioUtils.asyncize(get_tickers)
+        return list(set(map(lambda x: x.strip().upper(), tickers)))
 
 
 if __name__ == "__main__":

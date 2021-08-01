@@ -32,7 +32,7 @@ class YfinanceWrapper:
         self.__session = requests_cache.CachedSession('yfinance.cache')
         self.__session.headers['User-agent'] = 'technical-analysis-julian/1.0'
 
-    async def history(self, symbol: str, start: str = "1950-01-01", end: str = str(date.today())) -> DataFrame:
+    async def history(self, symbol: str, start: str = "2000-01-01", end: str = str(date.today())) -> DataFrame:
         ticker = yf.Ticker(symbol, self.__session)
         df = await AsyncioUtils.asyncize(ticker.history, start=start, end=end)
         df.dropna(inplace=True)
@@ -42,7 +42,7 @@ class YfinanceWrapper:
 if __name__ == "__main__":
     async def main():
         y = YfinanceWrapper()
-        df = await y.history('MSFT', '2021-05-15', '2021-05-19')
+        df = await y.history('AA')
         print(df)
 
     AsyncioUtils.run_async_main(main)

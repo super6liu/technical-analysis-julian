@@ -4,7 +4,7 @@ from decimal import Decimal
 from pandas import DataFrame
 from src.constants import Env
 from src.data.database.base_table import BaseTable
-
+from src.data.database.ticker_table import TickerTable
 
 class HistoryTable(BaseTable):
     def __init__(self, env: Env = Env.PRODUCETION) -> None:
@@ -25,7 +25,7 @@ class HistoryTable(BaseTable):
                 Volume BIGINT NOT NULL,
                 PRIMARY KEY (Symbol, Date),
                 FOREIGN KEY (Symbol)
-                    REFERENCES Ticker(Symbol)
+                    REFERENCES {TickerTable.__name__}(Symbol)
                     ON DELETE CASCADE
                     ON UPDATE RESTRICT
             ){" ENGINE=MEMORY" if self.env != Env.PRODUCETION else ""};

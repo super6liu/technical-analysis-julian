@@ -22,7 +22,10 @@ class Datastore():
     async def init(self):
         await self.__database.init()
 
-    async def read(self, symbol: str):
+    async def read_symbols(self):
+        return await self.__database.ticker.read_symbols()
+
+    async def read_history(self, symbol: str):
         return await self.__database.history.read(symbol)
 
     async def backfill(self, *symbols: Tuple[str]):
@@ -32,12 +35,12 @@ class Datastore():
         if (self.__env == Env.TEST):
             symbols = symbols[:100]
 
-        trimmed = map(lambda x: x.strip().upper().replace("/", "-"), symbols)        
+        trimmed = map(lambda x: x.replace("/", "-"), symbols)        
         tasks = map(lambda s: create_task(self.update(s), name=s), trimmed)
 
         async for i in AsyncioUtils.task_queue(tasks):
             progress = i * 100 // len(symbols)
-            sys.stdout.write('\r{0}: [{1}{2}] {3}%'.format("Backfill", '#'*(progress//2), '-'*(50-progress//2), progress))
+            sys.stdout.write('\r{0}: [{1}{2}] {3}% - {4}/{5}'.format("Backfill", '#'*(progress//2), '-'*(50-progress//2), progress, i, len(symbols)))
 
         print("\nTime consumed:", datetime.now() - begin)
 
@@ -100,9 +103,9 @@ class Datastore():
 
 if __name__ == '__main__':
     async def main():
-        ds = Datastore(Env.TEST)
+        ds = Datastore(Env.PRODUCETION)
         await ds.init()
-        await ds.delete('MSFT')
+        await ds.delete('AA')
 
         # await ds.update('MSFT')
         # print(await ds.read('MSFT'))
@@ -110,6 +113,6 @@ if __name__ == '__main__':
         # await ds.update('MSFT')
         # print(await ds.read('MSFT'))
 
-        await ds.backfill()
+        await ds.backfill("AA")
 
     AsyncioUtils.run_async_main(main)
