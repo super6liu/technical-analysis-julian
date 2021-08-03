@@ -4,6 +4,7 @@ import requests_cache
 import yfinance as yf
 from pandas import DataFrame
 from src.utils.asyncio_utils import AsyncioUtils
+from src.logger import WithLogger
 
 '''
 def auto_adjust(data):
@@ -27,22 +28,26 @@ def auto_adjust(data):
 '''
 
 
-class YfinanceWrapper:
+class YfinanceWrapper(WithLogger):
     def __init__(self) -> None:
+        WithLogger.__init__(self)
         self.__session = requests_cache.CachedSession('yfinance.cache')
         self.__session.headers['User-agent'] = 'technical-analysis-julian/1.0'
 
     async def history(self, symbol: str, start: str = "2000-01-01", end: str = str(date.today())) -> DataFrame:
+        self.logger.debug("%s downloading." % symbol)
         ticker = yf.Ticker(symbol, self.__session)
         df = await AsyncioUtils.asyncize(ticker.history, start=start, end=end)
         df.dropna(inplace=True)
-        return df[~df.index.duplicated(keep='first')]
+        df = df[~df.index.duplicated(keep='first')]
+        self.logger.debug("%s downloaded with %d rows." % (symbol, len(df)))
+        return df
 
 
 if __name__ == "__main__":
     async def main():
         y = YfinanceWrapper()
-        df = await y.history('AA')
-        print(df)
+        df = await y.history('ALOT')
+        # print(df)
 
     AsyncioUtils.run_async_main(main)

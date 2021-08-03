@@ -2,6 +2,7 @@ from typing import List
 
 from src.data.symbols.get_all_tickers_wrapper.get_tickers import get_tickers
 from src.utils.asyncio_utils import AsyncioUtils
+from src.logger import WithLogger
 
 # from get_all_tickers import get_tickers
 # fix get_all_tickers
@@ -11,17 +12,23 @@ from src.utils.asyncio_utils import AsyncioUtils
 # https://github.com/shilewenuw/get_all_tickers/pull/17#issuecomment-866093788
 
 
-class GetAllTickersWrapper:
+class GetAllTickersWrapper(WithLogger):
+    def __init__(self) -> None:
+        WithLogger.__init__(self)
+
     async def symbols(self) -> List[str]:
+        self.logger.debug("downloading")
         tickers = await AsyncioUtils.asyncize(get_tickers)
-        return list(set(map(lambda x: x.strip().upper(), tickers)))
+        tickers = list(set(map(lambda x: x.strip().upper(), tickers)))
+        tickers.sort()
+        self.logger.debug("downloaded %s" % len(tickers))
+        return tickers
 
 
 if __name__ == "__main__":
     async def main():
         g = GetAllTickersWrapper()
-        l = list(await g.symbols())
-        l.sort(reverse=True, key=len)
+        l = await g.symbols()
         print(l[:10])
 
     AsyncioUtils.run_async_main(main)
