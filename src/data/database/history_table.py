@@ -1,10 +1,12 @@
 from datetime import date
 from decimal import Decimal
+from typing import Tuple
 
 from pandas import DataFrame
 from src.constants import Env
 from src.data.database.base_table import BaseTable
-from src.data.database.ticker_table import TickerTable
+from src.utils.asyncio_utils import AsyncioUtils
+
 
 class HistoryTable(BaseTable):
     def __init__(self, env: Env = Env.PRODUCETION) -> None:
@@ -23,12 +25,8 @@ class HistoryTable(BaseTable):
                 Low DOUBLE NOT NULL,
                 Close DOUBLE NOT NULL,
                 Volume BIGINT NOT NULL,
-                PRIMARY KEY (Symbol, Date),
-                FOREIGN KEY (Symbol)
-                    REFERENCES {TickerTable.__name__}(Symbol)
-                    ON DELETE CASCADE
-                    ON UPDATE RESTRICT
-            ){" ENGINE=MEMORY" if self.env != Env.PRODUCETION else ""};
+                PRIMARY KEY (Symbol, Date)
+            );
         """
         await self.executor.execute(sql)
 
@@ -55,8 +53,37 @@ class HistoryTable(BaseTable):
                                     self.index] + self.columns)
         return df
 
-    async def update(self, *args, **kwargs):
-        raise NotImplementedError()
+    async def read_last(self, symbol: str):
+        sql = f"""
+            SELECT Date, {", ".join(self.columns)} FROM {__class__.__name__} AS T1
+            INNER JOIN (
+                SELECT MAX(DATE) as maxDate, Symbol FROM {__class__.__name__}
+                Where Symbol = %s
+            ) AS T2 
+            ON T1.Symbol = T2.Symbol AND T1.Date = T2.maxDate;
+        """
+        rows = await self.executor.read(sql, [symbol])
+        df = DataFrame.from_records(rows, index=self.index, columns=[
+                                    self.index] + self.columns)
+        return df
+
+    async def read_symbols(self) -> Tuple[str]:
+        sql = f"""
+            SELECT DISTINCT(Symbol) AS Symbol FROM {__class__.__name__}
+        """
+        rows = await self.executor.read(sql, [])
+        return tuple(map(lambda x: x[0], rows))
+
+    async def update(self, symbol: str, factor: float):
+        sql = f"""
+            UPDATE {__class__.__name__}
+            SET Open = Open * %s,
+                High = High * %s,
+                Low = Low * %s,
+                Close = Close * %s
+            WHERE Symbol = '{symbol}';
+        """
+        await self.executor.write(sql, [factor, factor, factor, factor])
 
     async def update_dividend(self, symbol: str, dividend: Decimal, start: date):
         sql = f"""
@@ -65,7 +92,7 @@ class HistoryTable(BaseTable):
                 High = High * @factor,
                 Low = Low * @factor,
                 Close = Close - %s
-            WHERE Symbol = '{symbol}' AND Date >= %s;
+            WHERE Symbol = '{symbol}' AND Date > %s;
         """
         await self.executor.write(sql, [dividend, dividend, start])
 
@@ -86,3 +113,15 @@ class HistoryTable(BaseTable):
             WHERE Symbol = '{symbol}';
         """
         await self.executor.execute(sql)
+
+
+if __name__ == "__main__":
+    async def main():
+        h = HistoryTable()
+        await h.init()
+        df = await h.read_last('BANR')
+        print(df)
+
+    AsyncioUtils.run_async_main(main)
+
+    

@@ -1,17 +1,14 @@
-from data.database.database import Database
-from src.data import Datastore
+from src.data import Data
 from src.constants import Env
+
 
 class Watchdog():
     def __init__(self, env: Env = Env.PRODUCETION) -> None:
         self.__env = env
-        self.__datastore = Datastore(env)
+        self.__data = Data(env)
 
     async def init(self):
-        await self.__datastore.init()
+        await self.__data.init()
 
     async def run(self):
-        await self.__datastore.backfill()
-        
-        
-    
+        await self.__data.backfill()

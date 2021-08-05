@@ -1,6 +1,9 @@
 from typing import Iterable
 
 from aiomysql import Pool, create_pool
+from numpy import float64
+from pandas import Timestamp
+from pymysql import converters
 from src.configs import Configs
 from src.constants import Env
 
@@ -12,7 +15,11 @@ class Wrapper():
     async def init(env: Env = Env.PRODUCETION):
         if not Wrapper.__pool:
             configs = Configs.configs("credentials", "mysql", env.value)
-            Wrapper.__pool = await create_pool(user=configs('user'), db=configs('db'), host='127.0.0.1', password=configs('password'), echo=True)
+            converters.encoders[float64] = converters.escape_float
+            converters.encoders[Timestamp] = converters.escape_datetime
+            converters.conversions = converters.encoders.copy()
+            converters.conversions.update(converters.decoders)
+            Wrapper.__pool = await create_pool(user=configs('user'), db=configs('db'), host='127.0.0.1', password=configs('password'), echo=True, conv=converters.decoders)
         return Wrapper()
 
     async def execute(self, sql: str):

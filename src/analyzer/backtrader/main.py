@@ -4,7 +4,7 @@ import backtrader as bt
 from pandas import DataFrame
 
 from src.constants import Env
-from src.data import Datastore
+from src.data import Data
 from src.utils.asyncio_utils import AsyncioUtils
 from src.analyzer.backtrader.strategies.test_strategy import TestStrategy
 
@@ -12,7 +12,7 @@ from src.analyzer.backtrader.strategies.test_strategy import TestStrategy
 
 if __name__ == '__main__':
     async def main():
-        ds = Datastore()
+        ds = Data()
         await ds.init()
         symbols = await ds.read_symbols()
         df = await ds.read_history("MSFT")

@@ -1,1 +1,1 @@
-from src.data.datastore import Datastore
+from src.data.data import Data

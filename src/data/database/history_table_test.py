@@ -7,21 +7,17 @@ from pandas import DataFrame, Timestamp
 from src.constants import Env
 
 from .history_table import HistoryTable
-from .ticker_table import TickerTable
 
 
 class TestHistoryTable(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls):
-        cls.fk = TickerTable(Env.TEST)
         cls.instance = HistoryTable(Env.TEST)
 
     async def asyncSetUp(self) -> None:
         await super().asyncSetUp()
-        await self.fk.init()
         ticker = DataFrame({'Dividended': [Timestamp(2021, 5, 3)], 'Splitted': [Timestamp(2021, 5, 3)],
                             'Updated': [Timestamp(2021, 5, 3)], 'Symbol': ['MSFT'], 'Something': ['Test']}).set_index('Symbol', drop=False)
-        await self.fk.insert('MSFT', ticker)
 
         await self.instance.init()
         sql = f"""
@@ -73,6 +69,38 @@ class TestHistoryTable(IsolatedAsyncioTestCase):
         for c in ['Open', 'High', 'Low', 'Close']:
             self.assertTrue(all(isclose(df[c], input[c])))
 
+    async def test_update_dividend_for_the_first_time(self):
+        input = DataFrame({'Date': [Timestamp(2021, 5, 9), Timestamp(2021, 5, 10), Timestamp(2021, 5, 11)],
+                           'Symbol': ['MSFT', 'MSFT', 'MSFT'],
+                           'Open': [float64("250.87"), float64("250.87"), float64("250.87")],
+                           'High': [float64("251.73"), float64("251.73"), float64("251.73")],
+                           'Low': [float64("247.12"), float64("247.12"), float64("247.12")],
+                           'Close': [float64("247.18"), float64("247.18"), float64("247.18")],
+                           'Volume': [29299900, 29299900, 29299900],
+                           'Dividends': [float64("0"), float64("0"), float64("0")],
+                           'Stock Splits': [float64("0"), float64("0"), float64("0")]
+                           })
+        input.set_index(["Date"], drop=False, inplace=True)
+        await self.instance.insert("MSFT", input)
+
+        await self.instance.update_dividend("MSFT", 0.5, None)
+
+        df = await self.instance.read('MSFT')
+        input = DataFrame({'Date': [Timestamp(2021, 5, 9), Timestamp(2021, 5, 10), Timestamp(2021, 5, 11)],
+                           'Symbol': ['MSFT', 'MSFT', 'MSFT'],
+                           'Open': [float64("250.87"), float64("250.362536"), float64("250.362536")],
+                           'High': [float64("251.73"), float64("251.220796"), float64("251.220796")],
+                           'Low': [float64("247.12"), float64("246.620121"), float64("246.620121")],
+                           'Close': [float64("247.18"), float64("246.68"), float64("246.68")],
+                           'Volume': [29299900, 29299900, 29299900],
+                           'Dividends': [float64("0"), float64("0"), float64("0")],
+                           'Stock Splits': [float64("0"), float64("0"), float64("0")]
+                           })
+        input.set_index(["Date"], drop=False, inplace=True)
+        self.assertTrue(df.index.equals(input.index))
+        for c in ['Open', 'High', 'Low', 'Close']:
+            self.assertTrue(all(isclose(df[c], input[c])))
+
     async def test_update_dividend(self):
         input = DataFrame({'Date': [Timestamp(2021, 5, 9), Timestamp(2021, 5, 10), Timestamp(2021, 5, 11)],
                            'Symbol': ['MSFT', 'MSFT', 'MSFT'],
@@ -104,6 +132,7 @@ class TestHistoryTable(IsolatedAsyncioTestCase):
         self.assertTrue(df.index.equals(input.index))
         for c in ['Open', 'High', 'Low', 'Close']:
             self.assertTrue(all(isclose(df[c], input[c])))
+
 
     async def test_update_split(self):
         input = DataFrame({'Date': [Timestamp(2021, 5, 9), Timestamp(2021, 5, 10), Timestamp(2021, 5, 11)],
@@ -152,8 +181,6 @@ class TestHistoryTable(IsolatedAsyncioTestCase):
                            })
         input.set_index(["Date"], drop=False, inplace=True)
         await self.instance.insert(input)
-
-        await self.fk.delete("MSFT")
 
         df = await self.instance.read('MSFT')
         self.assertTrue(df.empty)
