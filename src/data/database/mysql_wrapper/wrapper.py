@@ -4,7 +4,7 @@ from aiomysql import create_pool
 from numpy import float64
 from pandas import Timestamp
 from pymysql import converters
-from src.configs import Configs
+from src.configs import CREDENTIALS
 from src.constants import Env
 from src.data.database.interface_executor import ExecutorInterface
 
@@ -20,8 +20,8 @@ class Wrapper(ExecutorInterface):
 
     async def setUp(self):
         if not self.__pool:
-            configs = Configs.configs("credentials", "mysql", self.__env.value)
-            self.__pool = await create_pool(user=configs('user'), db=configs('db'), host='127.0.0.1', password=configs('password'), conv=converters.decoders)
+            credential =  CREDENTIALS["mysql"][self.__env.value]
+            self.__pool = await create_pool(user=credential['user'], db=credential['db'], host='127.0.0.1', password=credential['password'], conv=converters.decoders)
 
     async def tearDown(self):
         if self.__pool:

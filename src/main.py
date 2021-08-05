@@ -1,4 +1,4 @@
-from src.utils.asyncio_utils import AsyncioUtils
+from src.utils.asyncio_utils import run_async_main
 from src.watchdog import Watchdog
 
 if __name__ == '__main__':
@@ -7,4 +7,4 @@ if __name__ == '__main__':
         await wd.init()
         await wd.run()
 
-    AsyncioUtils.run_async_main(main)
+    run_async_main(main)

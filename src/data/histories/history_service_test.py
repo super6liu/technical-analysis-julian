@@ -45,7 +45,7 @@ class TestHistoryService(IsolatedAsyncioTestCase):
         self.assertEqual(len(df), 3)
         self.assertEqual(df.index.name, 'Date')
         self.assertListEqual(df.columns.tolist(), [
-                             'Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits'])
+                             'Open', 'High', 'Low', 'Close', 'Volume'])
         self.assertTrue(isinstance(df.index[0], Timestamp))
         self.assertTrue(isinstance(df['Open'][0], float64))
 

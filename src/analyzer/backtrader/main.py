@@ -5,7 +5,7 @@ from pandas import DataFrame
 
 from src.constants import Env
 from src.data import Data
-from src.utils.asyncio_utils import AsyncioUtils
+from src.utils.asyncio_utils import run_async_main
 from src.analyzer.backtrader.strategies.test_strategy import TestStrategy
 
 
@@ -35,4 +35,4 @@ if __name__ == '__main__':
         # cerebro.plot(style='bar')
 
 
-    AsyncioUtils.run_async_main(main)
+    run_async_main(main)

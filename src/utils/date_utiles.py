@@ -1,12 +1,10 @@
-from datetime import date, timedelta
+from datetime import datetime, timedelta, timezone
 
+TZ_EST = timezone(timedelta(hours=-5), 'EST')
 
-class DateUtils:
-    @staticmethod
-    def latest_weekday():
-        t = date.today()
-        d = t.weekday()
-        if (d < 5):
-            return t
+TODAY = datetime.now(TZ_EST).date()
 
-        return t - timedelta(days= (d - 4))
+TOMORROW = TODAY + timedelta(days=1)
+
+LATEST_WEEKDAY = TODAY if TODAY.weekday() < 5 else TODAY - \
+    timedelta(days=(TODAY.weekday() - 4))

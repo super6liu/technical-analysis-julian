@@ -5,7 +5,7 @@ from pandas import DataFrame
 from src.constants import Env
 from src.data.database.interface_executor import ExecutorInterface
 from src.data.database.interface_table import TableInterface
-from src.utils.asyncio_utils import AsyncioUtils
+from src.utils.asyncio_utils import run_async_main
 
 
 class HistoryTable(TableInterface):
@@ -100,4 +100,4 @@ if __name__ == "__main__":
         df = await h.read_last('BANR')
         print(df)
 
-    AsyncioUtils.run_async_main(main)
+    run_async_main(main)

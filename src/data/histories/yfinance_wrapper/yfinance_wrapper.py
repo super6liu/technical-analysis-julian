@@ -4,8 +4,8 @@ import requests_cache
 import yfinance as yf
 from pandas import DataFrame
 from src.logger import WithLogger
-from src.utils.asyncio_utils import AsyncioUtils
-from yfinance.utils import auto_adjust
+from src.utils.asyncio_utils import asyncize, run_async_main
+from src.utils.date_utiles import TOMORROW
 
 '''
 def auto_adjust(data):
@@ -28,8 +28,6 @@ def auto_adjust(data):
     return df[["Open", "High", "Low", "Close", "Volume"]]
 '''
 
-est = timezone(timedelta(hours=-5), 'EST')
-tomorrow = str((datetime.now(est) + timedelta(days=1)).date())
 
 class YfinanceWrapper(WithLogger):
     def __init__(self) -> None:
@@ -37,10 +35,10 @@ class YfinanceWrapper(WithLogger):
         self.__session = requests_cache.CachedSession('yfinance.cache')
         self.__session.headers['User-agent'] = 'technical-analysis-julian/1.0'
 
-    async def history(self, symbol: str, start: str = "2000-01-01", end: str = tomorrow) -> DataFrame:
+    async def history(self, symbol: str, start: str = "2000-01-01", end: str = str(TOMORROW)) -> DataFrame:
         self.logger.debug("%s downloading with period %s to %s." % (symbol, start, end))
         ticker = yf.Ticker(symbol, self.__session)
-        df = await AsyncioUtils.asyncize(ticker.history, start=start, end=end, actions=False, debug=False)
+        df = await asyncize(ticker.history, start=start, end=end, actions=False, debug=False)
         df.dropna(inplace=True)
         df = df[~df.index.duplicated(keep='first')]
         self.logger.debug("%s downloaded with %d rows." % (symbol, len(df)))
@@ -51,7 +49,7 @@ if __name__ == "__main__":
     async def main():
         y = YfinanceWrapper()
         df = await y.history('MSFT', '2021-01-01')
-        df.to_csv("msft.csv", header=True, index=True)
+        # df.to_csv("msft.csv", header=True, index=True)
         print(df)
 
-    AsyncioUtils.run_async_main(main)
+    run_async_main(main)

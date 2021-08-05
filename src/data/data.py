@@ -8,8 +8,8 @@ from src.data.database import Database
 from src.data.histories import Histories
 from src.data.symbols import Symbols
 from src.logger import WithLogger
-from src.utils.asyncio_utils import AsyncioUtils
-from src.utils.date_utiles import DateUtils
+from src.utils.asyncio_utils import run_async_main, task_queue
+from src.utils.date_utiles import LATEST_WEEKDAY
 
 
 class Data(WithLogger):
@@ -36,7 +36,7 @@ class Data(WithLogger):
         self.logger.info(f"{len(symbols)} symbols.")
         tasks = map(lambda s: create_task(self.update(s), name=s), symbols)
 
-        async for i in AsyncioUtils.task_queue(tasks):
+        async for i in task_queue(tasks):
             progress = i * 100 // len(symbols)
             sys.stdout.write('\r{0}: [{1}{2}] {3}% - {4}/{5}'.format("Backfill", '#'*(
                 progress//2), '-'*(50-progress//2), progress, i, len(symbols)))
@@ -83,7 +83,7 @@ class Data(WithLogger):
                 await self.__database.history.insert(symbol, history)
         else:
             updated = last.index[0]
-            if (updated >= DateUtils.latest_weekday()):
+            if (updated >= LATEST_WEEKDAY):
                 return
 
             history = await self.__histories.history(symbol, start=updated.date())
@@ -113,4 +113,4 @@ if __name__ == '__main__':
         await ds.backfill('ACBA')
         await ds.validate('ACBA')
 
-    AsyncioUtils.run_async_main(main)
+    run_async_main(main)
