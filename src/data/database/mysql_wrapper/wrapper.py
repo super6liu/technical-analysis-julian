@@ -5,22 +5,22 @@ from numpy import float64
 from pandas import Timestamp
 from pymysql import converters
 from src.configs import CREDENTIALS
-from src.constants import Env
 from src.data.database.interface_executor import ExecutorInterface
+from src.utils.env_utils import get_env
 
 converters.encoders[float64] = converters.escape_float
 converters.encoders[Timestamp] = converters.escape_datetime
 converters.conversions = converters.encoders.copy()
 converters.conversions.update(converters.decoders)
 
+
 class Wrapper(ExecutorInterface):
-    def __init__(self, env: Env = Env.PRODUCETION) -> None:
-        self.__env = env
+    def __init__(self) -> None:
         self.__pool = None
 
     async def setUp(self):
         if not self.__pool:
-            credential =  CREDENTIALS["mysql"][self.__env.value]
+            credential = CREDENTIALS["mysql"][get_env().value]
             self.__pool = await create_pool(user=credential['user'], db=credential['db'], host='127.0.0.1', password=credential['password'], conv=converters.decoders)
 
     async def tearDown(self):

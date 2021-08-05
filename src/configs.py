@@ -1,5 +1,6 @@
 from json import load
 
+
 with open('configs.json') as f:
     CONFIGS = load(f)
 

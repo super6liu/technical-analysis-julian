@@ -1,11 +1,9 @@
 from src.data import Data
-from src.constants import Env
 
 
 class Watchdog():
-    def __init__(self, env: Env = Env.PRODUCETION) -> None:
-        self.__env = env
-        self.__data = Data(env)
+    def __init__(self) -> None:
+        self.__data = Data()
 
     async def init(self):
         await self.__data.init()

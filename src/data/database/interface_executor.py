@@ -1,12 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Iterable
 
-from src.constants import Env
-
 
 class ExecutorInterface(ABC):
     @abstractmethod
-    def __init__(self, env: Env = Env.PRODUCETION):
+    def __init__(self):
         pass
 
     @abstractmethod

@@ -2,18 +2,17 @@ from datetime import date
 from typing import Tuple
 
 from pandas import DataFrame
-from src.constants import Env
 from src.data.database.interface_executor import ExecutorInterface
 from src.data.database.interface_table import TableInterface
 from src.utils.asyncio_utils import run_async_main
+from src.utils.env_utils import is_test
 
 
 class HistoryTable(TableInterface):
-    def __init__(self, executor: ExecutorInterface, env: Env = Env.PRODUCETION) -> None:
+    def __init__(self, executor: ExecutorInterface) -> None:
         self.executor = executor
         self.index = "Date"
         self.columns = ["Open", "High", "Low", "Close", "Volume"]
-        self.env = env
 
     async def init(self):
         sql = f"""
@@ -26,7 +25,7 @@ class HistoryTable(TableInterface):
                 Close DOUBLE NOT NULL,
                 Volume BIGINT NOT NULL,
                 PRIMARY KEY (Symbol, Date)
-            ){" ENGINE=MEMORY" if self.env == Env.TEST else ""};
+            ){" ENGINE=MEMORY" if is_test() else ""};
         """
         await self.executor.execute(sql)
 

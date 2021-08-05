@@ -3,7 +3,6 @@ from asyncio import create_task, gather
 from typing import Tuple
 
 from numpy import isclose
-from src.constants import Env
 from src.data.database import Database
 from src.data.histories import Histories
 from src.data.symbols import Symbols
@@ -13,10 +12,9 @@ from src.utils.date_utiles import LATEST_WEEKDAY
 
 
 class Data(WithLogger):
-    def __init__(self, env: Env = Env.PRODUCETION) -> None:
+    def __init__(self) -> None:
         WithLogger.__init__(self)
-        self.__env = env
-        self.__database = Database(env)
+        self.__database = Database()
         self.__histories = Histories()
         self.__symbols = Symbols()
 
@@ -69,11 +67,8 @@ class Data(WithLogger):
             
 
     async def delete(self, symbol: str):
-        # FK CASCADE to History table
-        if (self.__env == Env.TEST):
-            await self.__database.history.delete(symbol)
+        await self.__database.history.delete(symbol)
 
-        await self.__database.ticker.delete(symbol)
 
     async def update(self, symbol: str):
         last = await self.__database.history.read_last(symbol)
@@ -100,7 +95,7 @@ class Data(WithLogger):
 
 if __name__ == '__main__':
     async def main():
-        ds = Data(Env.PRODUCETION)
+        ds = Data()
         await ds.init()
         # await ds.delete('PUK')
 

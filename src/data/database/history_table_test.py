@@ -5,13 +5,15 @@ from pandas import read_csv
 from src.constants import Env
 from src.data.database.history_table import HistoryTable
 from src.data.database.mysql_wrapper.wrapper import Wrapper
+from src.utils.env_utils import set_env
 
 
 class TestHistoryTable(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls):
-        cls.executor = Wrapper(Env.TEST)
-        cls.instance = HistoryTable(cls.executor, Env.TEST)
+        set_env(Env.TEST)
+        cls.executor = Wrapper()
+        cls.instance = HistoryTable(cls.executor)
 
     async def asyncSetUp(self) -> None:
         await super().asyncSetUp()
