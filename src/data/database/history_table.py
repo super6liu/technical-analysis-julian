@@ -1,21 +1,21 @@
 from datetime import date
-from decimal import Decimal
 from typing import Tuple
 
 from pandas import DataFrame
 from src.constants import Env
-from src.data.database.base_table import BaseTable
+from src.data.database.interface_executor import ExecutorInterface
+from src.data.database.interface_table import TableInterface
 from src.utils.asyncio_utils import AsyncioUtils
 
 
-class HistoryTable(BaseTable):
-    def __init__(self, env: Env = Env.PRODUCETION) -> None:
-        super().__init__(
-            "Date", ["Open", "High", "Low", "Close", "Volume"], env)
+class HistoryTable(TableInterface):
+    def __init__(self, executor: ExecutorInterface, env: Env = Env.PRODUCETION) -> None:
+        self.executor = executor
+        self.index = "Date"
+        self.columns = ["Open", "High", "Low", "Close", "Volume"]
+        self.env = env
 
     async def init(self):
-        await super().init()
-
         sql = f"""
             CREATE TABLE IF NOT EXISTS {__class__.__name__} (
                 Symbol VARCHAR(5) NOT NULL,
@@ -26,7 +26,7 @@ class HistoryTable(BaseTable):
                 Close DOUBLE NOT NULL,
                 Volume BIGINT NOT NULL,
                 PRIMARY KEY (Symbol, Date)
-            );
+            ){" ENGINE=MEMORY" if self.env == Env.TEST else ""};
         """
         await self.executor.execute(sql)
 
@@ -85,28 +85,6 @@ class HistoryTable(BaseTable):
         """
         await self.executor.write(sql, [factor, factor, factor, factor])
 
-    async def update_dividend(self, symbol: str, dividend: Decimal, start: date):
-        sql = f"""
-            UPDATE {__class__.__name__}
-            SET Open = Open * (@factor := (Close - %s) / Close),
-                High = High * @factor,
-                Low = Low * @factor,
-                Close = Close - %s
-            WHERE Symbol = '{symbol}' AND Date > %s;
-        """
-        await self.executor.write(sql, [dividend, dividend, start])
-
-    async def update_split(self, symbol: str, split: Decimal):
-        sql = f"""
-            UPDATE {__class__.__name__}
-            SET Open = Open / (@split := %s),
-                High = High / @split,
-                Low = Low / @split,
-                Close = Close / @split
-            WHERE Symbol = '{symbol}';
-        """
-        await self.executor.write(sql, [split])
-
     async def delete(self, symbol: str):
         sql = f"""
             DELETE FROM {__class__.__name__}
@@ -123,5 +101,3 @@ if __name__ == "__main__":
         print(df)
 
     AsyncioUtils.run_async_main(main)
-
-    

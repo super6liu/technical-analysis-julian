@@ -50,7 +50,8 @@ class YfinanceWrapper(WithLogger):
 if __name__ == "__main__":
     async def main():
         y = YfinanceWrapper()
-        df = await y.history('ACBA', '2021-08-03')
+        df = await y.history('MSFT', '2021-01-01')
+        df.to_csv("msft.csv", header=True, index=True)
         print(df)
 
     AsyncioUtils.run_async_main(main)

@@ -1,43 +1,32 @@
-from datetime import date
 from unittest import IsolatedAsyncioTestCase, main
-from unittest.case import skip
 
-from numpy import float64, isclose
-from pandas import DataFrame, Timestamp
+from numpy import isclose
+from pandas import read_csv
 from src.constants import Env
-
-from .history_table import HistoryTable
+from src.data.database.history_table import HistoryTable
+from src.data.database.mysql_wrapper.wrapper import Wrapper
 
 
 class TestHistoryTable(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls):
-        cls.instance = HistoryTable(Env.TEST)
+        cls.executor = Wrapper(Env.TEST)
+        cls.instance = HistoryTable(cls.executor, Env.TEST)
 
     async def asyncSetUp(self) -> None:
         await super().asyncSetUp()
-        ticker = DataFrame({'Dividended': [Timestamp(2021, 5, 3)], 'Splitted': [Timestamp(2021, 5, 3)],
-                            'Updated': [Timestamp(2021, 5, 3)], 'Symbol': ['MSFT'], 'Something': ['Test']}).set_index('Symbol', drop=False)
-
+        await self.executor.setUp()
         await self.instance.init()
-        sql = f"""
-            DELETE IGNORE FROM {self.instance.__class__.__name__};
-        """
-        await self.instance.executor.execute(sql)
 
     async def asyncTearDown(self) -> None:
         await super().asyncTearDown()
         sql = f"""
             DROP TABLE IF EXISTS {self.instance.__class__.__name__};
-            DROP TABLE IF EXISTS {TickerTable.__name__};
         """
         await self.instance.executor.execute(sql)
+        await self.executor.tearDown()
 
     async def test_init(self):
-        self.assertEqual(self.instance.index, "Date")
-        self.assertListEqual(self.instance.columns, [
-                             "Open", "High", "Low", "Close", "Volume"])
-
         sql = f"""
             SELECT 1 FROM {self.instance.__class__.__name__};
         """
@@ -50,140 +39,45 @@ class TestHistoryTable(IsolatedAsyncioTestCase):
         self.assertListEqual(df.columns.tolist(), self.instance.columns)
 
     async def test_create(self):
-        input = DataFrame({'Date': [Timestamp(2021, 5, 10)],
-                           'Symbol': ['MSFT'],
-                           'Open': [float64("250.87")],
-                           'High': [float64("251.73")],
-                           'Low': [float64("247.12")],
-                           'Close': [float64("247.18")],
-                           'Adj Close': [float64("246.61")],
-                           'Volume': [29299900],
-                           'Dividends': [float64("0")],
-                           'Stock Splits': [float64("0")]
-                           })
-        input.set_index(["Date"], drop=False, inplace=True)
+        input = read_csv(__file__.replace(".py", ".csv"), index_col="Date")
         await self.instance.insert('MSFT', input)
 
-        df = await self.instance.read('MSFT')
-        self.assertTrue(df.index.equals(input.index))
-        for c in ['Open', 'High', 'Low', 'Close']:
-            self.assertTrue(all(isclose(df[c], input[c])))
+        output = await self.instance.read('MSFT')
+        self.assertTrue(isclose(input, output).all())
 
-    async def test_update_dividend_for_the_first_time(self):
-        input = DataFrame({'Date': [Timestamp(2021, 5, 9), Timestamp(2021, 5, 10), Timestamp(2021, 5, 11)],
-                           'Symbol': ['MSFT', 'MSFT', 'MSFT'],
-                           'Open': [float64("250.87"), float64("250.87"), float64("250.87")],
-                           'High': [float64("251.73"), float64("251.73"), float64("251.73")],
-                           'Low': [float64("247.12"), float64("247.12"), float64("247.12")],
-                           'Close': [float64("247.18"), float64("247.18"), float64("247.18")],
-                           'Volume': [29299900, 29299900, 29299900],
-                           'Dividends': [float64("0"), float64("0"), float64("0")],
-                           'Stock Splits': [float64("0"), float64("0"), float64("0")]
-                           })
-        input.set_index(["Date"], drop=False, inplace=True)
-        await self.instance.insert("MSFT", input)
+    async def test_read_symbols(self):
+        input = read_csv(__file__.replace(".py", ".csv"), index_col="Date")
+        await self.instance.insert('MSFT', input)
 
-        await self.instance.update_dividend("MSFT", 0.5, None)
+        output = await self.instance.read_symbols()
+        self.assertTupleEqual(output, ('MSFT',))
 
-        df = await self.instance.read('MSFT')
-        input = DataFrame({'Date': [Timestamp(2021, 5, 9), Timestamp(2021, 5, 10), Timestamp(2021, 5, 11)],
-                           'Symbol': ['MSFT', 'MSFT', 'MSFT'],
-                           'Open': [float64("250.87"), float64("250.362536"), float64("250.362536")],
-                           'High': [float64("251.73"), float64("251.220796"), float64("251.220796")],
-                           'Low': [float64("247.12"), float64("246.620121"), float64("246.620121")],
-                           'Close': [float64("247.18"), float64("246.68"), float64("246.68")],
-                           'Volume': [29299900, 29299900, 29299900],
-                           'Dividends': [float64("0"), float64("0"), float64("0")],
-                           'Stock Splits': [float64("0"), float64("0"), float64("0")]
-                           })
-        input.set_index(["Date"], drop=False, inplace=True)
-        self.assertTrue(df.index.equals(input.index))
-        for c in ['Open', 'High', 'Low', 'Close']:
-            self.assertTrue(all(isclose(df[c], input[c])))
+    async def test_read_last(self):
+        input = read_csv(__file__.replace(".py", ".csv"), index_col="Date")
+        await self.instance.insert('MSFT', input)
 
-    async def test_update_dividend(self):
-        input = DataFrame({'Date': [Timestamp(2021, 5, 9), Timestamp(2021, 5, 10), Timestamp(2021, 5, 11)],
-                           'Symbol': ['MSFT', 'MSFT', 'MSFT'],
-                           'Open': [float64("250.87"), float64("250.87"), float64("250.87")],
-                           'High': [float64("251.73"), float64("251.73"), float64("251.73")],
-                           'Low': [float64("247.12"), float64("247.12"), float64("247.12")],
-                           'Close': [float64("247.18"), float64("247.18"), float64("247.18")],
-                           'Volume': [29299900, 29299900, 29299900],
-                           'Dividends': [float64("0"), float64("0"), float64("0")],
-                           'Stock Splits': [float64("0"), float64("0"), float64("0")]
-                           })
-        input.set_index(["Date"], drop=False, inplace=True)
-        await self.instance.insert("MSFT", input)
+        output = await self.instance.read_last('MSFT')
+        self.assertTrue(isclose(input.tail(1), output).all())
 
-        await self.instance.update_dividend("MSFT", 0.5, date(2021, 5, 10))
+    async def test_update(self):
+        input = read_csv(__file__.replace(".py", ".csv"), index_col="Date")
+        await self.instance.insert('MSFT', input)
 
-        df = await self.instance.read('MSFT')
-        input = DataFrame({'Date': [Timestamp(2021, 5, 9), Timestamp(2021, 5, 10), Timestamp(2021, 5, 11)],
-                           'Symbol': ['MSFT', 'MSFT', 'MSFT'],
-                           'Open': [float64("250.87"), float64("250.362536"), float64("250.362536")],
-                           'High': [float64("251.73"), float64("251.220796"), float64("251.220796")],
-                           'Low': [float64("247.12"), float64("246.620121"), float64("246.620121")],
-                           'Close': [float64("247.18"), float64("246.68"), float64("246.68")],
-                           'Volume': [29299900, 29299900, 29299900],
-                           'Dividends': [float64("0"), float64("0"), float64("0")],
-                           'Stock Splits': [float64("0"), float64("0"), float64("0")]
-                           })
-        input.set_index(["Date"], drop=False, inplace=True)
-        self.assertTrue(df.index.equals(input.index))
-        for c in ['Open', 'High', 'Low', 'Close']:
-            self.assertTrue(all(isclose(df[c], input[c])))
+        await self.instance.update('MSFT', 0.5)
+
+        output = await self.instance.read('MSFT')
+        input[["Open", "High", "Low", "Close"]] = input[["Open", "High", "Low", "Close"]] * 0.5
+        self.assertTrue(isclose(input, output).all())
 
 
-    async def test_update_split(self):
-        input = DataFrame({'Date': [Timestamp(2021, 5, 9), Timestamp(2021, 5, 10), Timestamp(2021, 5, 11)],
-                           'Symbol': ['MSFT', 'MSFT', 'MSFT'],
-                           'Open': [float64("250.87"), float64("250.87"), float64("250.87")],
-                           'High': [float64("251.73"), float64("251.73"), float64("251.73")],
-                           'Low': [float64("247.12"), float64("247.12"), float64("247.12")],
-                           'Close': [float64("247.18"), float64("247.18"), float64("247.18")],
-                           'Volume': [29299900, 29299900, 29299900],
-                           'Dividends': [float64("0"), float64("0"), float64("0")],
-                           'Stock Splits': [float64("0"), float64("0"), float64("0")]
-                           })
-        input.set_index(["Date"], drop=False, inplace=True)
-        await self.instance.insert("MSFT", input)
-
-        await self.instance.update_split("MSFT", 2)
-
-        df = await self.instance.read('MSFT')
-        input = DataFrame({'Date': [Timestamp(2021, 5, 9), Timestamp(2021, 5, 10), Timestamp(2021, 5, 11)],
-                           'Symbol': ['MSFT', 'MSFT', 'MSFT'],
-                           'Open': [float64("125.435"), float64("125.435"), float64("125.435")],
-                           'High': [float64("125.865"), float64("125.865"), float64("125.865")],
-                           'Low': [float64("123.56"), float64("123.56"), float64("123.56")],
-                           'Close': [float64("123.59"), float64("123.59"), float64("123.59")],
-                           'Volume': [29299900, 29299900, 29299900],
-                           'Dividends': [float64("0"), float64("0"), float64("0")],
-                           'Stock Splits': [float64("0"), float64("0"), float64("0")]
-                           })
-        input.set_index(["Date"], drop=False, inplace=True)
-        self.assertTrue(df.index.equals(input.index))
-        for c in ['Open', 'High', 'Low', 'Close']:
-            self.assertTrue(all(isclose(df[c], input[c])))
-
-    @skip("mysql MEMORY ENGINE in Env.Test doesn't support Foreign Key constaint.")
     async def test_delete(self):
-        input = DataFrame({'Date': [Timestamp(2021, 5, 10)],
-                           'Symbol': ['MSFT'],
-                           'Open': [float64("250.87")],
-                           'High': [float64("251.73")],
-                           'Low': [float64("247.12")],
-                           'Close': [float64("247.18")],
-                           'Adj Close': [float64("246.61")],
-                           'Volume': [29299900],
-                           'Dividends': [float64("0")],
-                           'Stock Splits': [float64("0")]
-                           })
-        input.set_index(["Date"], drop=False, inplace=True)
-        await self.instance.insert(input)
+        input = read_csv(__file__.replace(".py", ".csv"), index_col="Date")
+        await self.instance.insert('MSFT', input)
 
-        df = await self.instance.read('MSFT')
-        self.assertTrue(df.empty)
+        await self.instance.delete('MSFT')
+
+        output = await self.instance.read('MSFT')
+        self.assertTrue(output.empty)
 
 
 if __name__ == "__main__":
