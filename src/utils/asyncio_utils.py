@@ -30,7 +30,7 @@ async def task_queue(tasks: Iterable[Task], maxsize: int = 10) -> AsyncGenerator
         item = await queue.get()
         if (item._state == "PENDING"):
             await queue.put(item)
-            await sleep(0.1 * queue.qsize())
+            await sleep(0.01 * queue.qsize())
         else:
             queue.task_done()
             i += 1

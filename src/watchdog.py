@@ -10,3 +10,4 @@ class Watchdog():
 
     async def run(self):
         await self.__data.backfill()
+        await self.__data.validate()

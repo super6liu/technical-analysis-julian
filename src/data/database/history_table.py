@@ -52,6 +52,17 @@ class HistoryTable(TableInterface):
                                     self.index] + self.columns)
         return df
 
+    async def read_first(self, symbol: str):
+        sql = f"""
+            SELECT Date, {", ".join(self.columns)} FROM {__class__.__name__}
+            Where Symbol = %s 
+            LIMIT 1;
+        """
+        rows = await self.executor.read(sql, [symbol])
+        df = DataFrame.from_records(rows, index=self.index, columns=[
+                                    self.index] + self.columns)
+        return df
+
     async def read_last(self, symbol: str):
         sql = f"""
             SELECT Date, {", ".join(self.columns)} FROM {__class__.__name__} AS T1

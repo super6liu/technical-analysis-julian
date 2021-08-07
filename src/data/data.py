@@ -1,5 +1,5 @@
-import sys
-from asyncio import create_task, gather
+from asyncio import create_task
+from datetime import datetime, timedelta
 from typing import Tuple
 
 from numpy import isclose
@@ -8,6 +8,7 @@ from src.data.histories import Histories
 from src.data.symbols import Symbols
 from src.logger import WithLogger
 from src.utils.asyncio_utils import run_async_main, task_queue
+from src.utils.console_utils import progress
 from src.utils.date_utiles import LATEST_WEEKDAY
 
 
@@ -22,55 +23,64 @@ class Data(WithLogger):
         await self.__database.init()
 
     async def read_symbols(self):
-        return await self.__database.ticker.read_symbols()
+        return await self.__database.history.read_symbols()
 
     async def read_history(self, symbol: str):
         return await self.__database.history.read(symbol)
 
     async def backfill(self, *symbols: Tuple[str]):
         if not symbols:
-            symbols = await self.__database.history.read_symbols()
+            symbols = await self.__symbols.symbols()
 
         self.logger.info(f"{len(symbols)} symbols.")
-        tasks = map(lambda s: create_task(self.update(s), name=s), symbols)
+        tasks = map(lambda s: create_task(self.__update(s), name=s), symbols)
 
         async for i in task_queue(tasks):
-            progress = i * 100 // len(symbols)
-            sys.stdout.write('\r{0}: [{1}{2}] {3}% - {4}/{5}'.format("Backfill", '#'*(
-                progress//2), '-'*(50-progress//2), progress, i, len(symbols)))
+            progress(i, len(symbols), "Backfill")
 
         self.logger.info("done.")
 
-    async def validate(self, *symbols: Tuple[str]):
+    async def validate(self, resume: str = None, symbols: Tuple[str] = None):
+        """
+        :Parameter
+            resume: str
+                Last known valid symbol to resume the validation from.
+                Default is None.
+        """
         if not symbols:
             symbols = await self.__database.history.read_symbols()
+            if resume:
+                symbols = symbols[symbols.index(resume) + 1:]
 
-        for i, symbol in enumerate(symbols):
-            progress = i * 100 // len(symbols)
-            sys.stdout.write('\r{0}: [{1}{2}] {3}% - {4}/{5}'.format("Validate", '#'*(
-                progress//2), '-'*(50-progress//2), progress, i, len(symbols)))
+        self.logger.info(f"{len(symbols)} symbols.")
+        start = datetime.now()
+        tasks = map(lambda s: create_task(self.__test(s), name=s), symbols)
 
-            webCoroutine = self.__histories.history(symbol)
-            dbCoroutine = self.__database.history.read(symbol)
-            web, db = await gather(webCoroutine, dbCoroutine)
+        async for i in task_queue(tasks):
+            progress(i, len(symbols), "Validate")
 
-            candidate = lambda d: d[['Open', 'High', 'Low', 'Close']].head(len(d) - 1)
-            try:
-                if not isclose(candidate(web), candidate(db)).all():
-                    self.logger.error(symbol)
-                    await self.__database.history.delete(symbol)
-                    await self.__database.history.insert(symbol, web)
-            except Exception as e:
-                self.logger.exception(e)
-                await self.__database.history.delete(symbol)
-
-            
-
-    async def delete(self, symbol: str):
-        await self.__database.history.delete(symbol)
+        self.logger.info(datetime.now() - start)
 
 
-    async def update(self, symbol: str):
+    async def __test(self, symbol: str):
+        db = await self.__database.history.read_first(symbol)
+        web = await self.__histories.history(symbol, start=str(db.index[0].date()), end=str(db.index[0].date() + timedelta(days=1)))
+
+        def candidate(d):
+            return d[['Open', 'High', 'Low', 'Close']]
+
+        async def handle():
+            self.logger.error("Invalid data for\n%s.\nData in db:\n%s.\nData from web:\n%s" % (symbol, db, web))            
+            await self.__database.history.delete(symbol)
+
+        try:
+            if not isclose(candidate(web), candidate(db)).all():
+                await handle()
+        except Exception as e:
+            await handle()
+            self.logger.exception(e)
+
+    async def __update(self, symbol: str):
         last = await self.__database.history.read_last(symbol)
         if last.empty:
             history = await self.__histories.history(symbol)
@@ -97,15 +107,8 @@ if __name__ == '__main__':
     async def main():
         ds = Data()
         await ds.init()
-        # await ds.delete('PUK')
 
-        # await ds.update('MSFT')
-        # print(await ds.read('MSFT'))
-
-        # await ds.update('MSFT')
-        # print(await ds.read('MSFT'))
-
-        await ds.backfill('ACBA')
-        await ds.validate('ACBA')
+        # await ds.backfill('GIM')
+        await ds.validate()
 
     run_async_main(main)
