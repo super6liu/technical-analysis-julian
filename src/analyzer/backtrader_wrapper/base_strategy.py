@@ -1,19 +1,18 @@
 from backtrader import Strategy
+from src.logger import WithLogger
 
 
-class TestStrategy(Strategy):
+class BaseStrategy(Strategy, WithLogger):
+    def __init__(self, verbose: bool = False):
+        WithLogger.__init__(self)
+        self.verbose = verbose
 
-    def log(self, txt, dt=None):
-        ''' Logging function fot this strategy'''
-        dt = dt or self.datas[0].datetime.date(0)
-        print('%s, %s' % (dt.isoformat(), txt))
-
-    def __init__(self):
         # Keep a reference to the "close" line in the data[0] dataseries
         self.dataclose = self.datas[0].close
 
         # To keep track of pending orders
         self.order = None
+        self.qualifiers = self.qualifier(self.datas[0])
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -38,7 +37,7 @@ class TestStrategy(Strategy):
 
     def next(self):
         # Simply log the closing price of the series from the reference
-        self.log('Close, %.2f' % self.dataclose[0])
+        # print('Close, %.2f' % self.dataclose[0])
 
         # Check if an order is pending ... if yes, we cannot send a 2nd one
         if self.order:
@@ -48,24 +47,28 @@ class TestStrategy(Strategy):
         if not self.position:
 
             # Not yet ... we MIGHT BUY if ...
-            if self.dataclose[0] < self.dataclose[-1]:
-                # current close less than previous close
+            if self.shouldBuy(self.data, self.qualifiers):
 
-                if self.dataclose[-1] < self.dataclose[-2]:
-                    # previous close less than the previous close
+                # BUY, BUY, BUY!!! (with default parameters)
+                self.log('BUY CREATE, %.2f' % self.dataclose[0])
 
-                    # BUY, BUY, BUY!!! (with default parameters)
-                    self.log('BUY CREATE, %.2f' % self.dataclose[0])
-
-                    # Keep track of the created order to avoid a 2nd order
-                    self.order = self.buy()
+                # Keep track of the created order to avoid a 2nd order
+                self.order = self.buy()
 
         else:
-
             # Already in the market ... we might sell
-            if len(self) >= (self.bar_executed + 5):
+            if self.shouldSell(self.data, self.qualifiers):
                 # SELL, SELL, SELL!!! (with all possible default parameters)
                 self.log('SELL CREATE, %.2f' % self.dataclose[0])
 
                 # Keep track of the created order to avoid a 2nd order
                 self.order = self.sell()
+
+    def stop(self):
+        print("%s stop at %f" % (self.params._getkwargs(), self.broker.getvalue()))
+
+    def log(self, txt, dt=None, force: bool = False):
+        ''' Logging function fot this strategy'''
+        if False :#force or self.verbose:
+            dt = dt or self.datas[0].datetime.date(0)
+            self.logger.debug('%s, %s' % (dt.isoformat(), txt))

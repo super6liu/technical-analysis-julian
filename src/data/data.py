@@ -61,6 +61,8 @@ class Data(WithLogger):
 
         self.logger.info(datetime.now() - start)
 
+    async def delete(self, symbol: str, start: str = '2000-01-01'):
+        pass
 
     async def __test(self, symbol: str):
         db = await self.__database.history.read_first(symbol)
